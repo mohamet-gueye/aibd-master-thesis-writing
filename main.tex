@@ -1,0 +1,140 @@
+\documentclass[
+    12pt,
+    a4paper
+]{report}
+
+% ============================================================
+% BASIC PACKAGES
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+\usepackage[
+    left=3cm,
+    right=2.5cm,
+    top=2.5cm,
+    bottom=2.5cm
+]{geometry}
+
+\usepackage{setspace}
+\onehalfspacing
+
+% ============================================================
+% FIGURES AND TABLES
+% ============================================================
+
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+
+% ============================================================
+% MATHEMATICS
+% ============================================================
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% ============================================================
+% ALGORITHMS
+% ============================================================
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% ============================================================
+% CAPTIONS
+% ============================================================
+
+\usepackage{caption}
+\usepackage{subcaption}
+
+% ============================================================
+% REFERENCES
+% ============================================================
+
+\usepackage[
+    backend=biber,
+    style=authoryear,
+    sorting=nyt
+]{biblatex}
+
+\addbibresource{references/references.bib}
+
+% ============================================================
+% LINKS AND CROSS-REFERENCES
+% ============================================================
+
+\usepackage[hidelinks]{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+
+% ============================================================
+% DOCUMENT
+% ============================================================
+
+\begin{document}
+
+% ------------------------------------------------------------
+% FRONT MATTER
+% ------------------------------------------------------------
+
+\pagenumbering{roman}
+
+\input{frontmatter/titlepage}
+
+\input{frontmatter/declaration}
+
+\input{frontmatter/abstract}
+
+\input{frontmatter/acknowledgements}
+
+\tableofcontents
+\clearpage
+
+\listoffigures
+\clearpage
+
+\listoftables
+\clearpage
+
+% ------------------------------------------------------------
+% MAIN THESIS
+% ------------------------------------------------------------
+
+\pagenumbering{arabic}
+
+\input{chapters/01_introduction}
+
+\input{chapters/02_preliminaries}
+
+\input{chapters/03_literature_review}
+
+\input{chapters/04_methodology}
+
+\input{chapters/05_results_discussion}
+
+\input{chapters/06_conclusions_future_work}
+
+% ------------------------------------------------------------
+% REFERENCES
+% ------------------------------------------------------------
+
+\printbibliography[
+    heading=bibintoc,
+    title={References}
+]
+
+% ------------------------------------------------------------
+% APPENDICES
+% ------------------------------------------------------------
+
+\appendix
+
+\input{appendices/appendix_a}
+
+\end{document}
