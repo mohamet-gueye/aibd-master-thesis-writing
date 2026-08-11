@@ -4,12 +4,20 @@
 ]{report}
 
 % ============================================================
-% BASIC PACKAGES
+% ENCODING AND LANGUAGE
 % ============================================================
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
+
+% English is the main thesis language.
+% German is required for the German abstract.
+\usepackage[ngerman,english]{babel}
+
+% ============================================================
+% PAGE LAYOUT
+% ============================================================
 
 \usepackage[
     left=3cm,
@@ -21,12 +29,25 @@
 \usepackage{setspace}
 \onehalfspacing
 
+\usepackage{microtype}
+
 % ============================================================
-% FIGURES AND TABLES
+% FIGURES
 % ============================================================
 
 \usepackage{graphicx}
-\graphicspath{{figures/}}
+
+\graphicspath{
+    {figures/}
+    {figures/chapter4/}
+    {figures/chapter5/}
+    {figures/appendix_a/}
+    {figures/appendix_b/}
+}
+
+% ============================================================
+% TABLES
+% ============================================================
 
 \usepackage{booktabs}
 \usepackage{longtable}
@@ -41,11 +62,29 @@
 \usepackage{amssymb}
 
 % ============================================================
-% ALGORITHMS
+% CODE LISTINGS
 % ============================================================
 
-\usepackage{algorithm}
-\usepackage{algpseudocode}
+% The finalized thesis contains numbered code and implementation
+% extracts rather than algorithm pseudocode.
+
+\usepackage{listings}
+
+\renewcommand{\lstlistingname}{Code}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b
+}
 
 % ============================================================
 % CAPTIONS
@@ -57,6 +96,8 @@
 % ============================================================
 % REFERENCES
 % ============================================================
+
+\usepackage{csquotes}
 
 \usepackage[
     backend=biber,
@@ -71,7 +112,27 @@
 % ============================================================
 
 \usepackage[hidelinks]{hyperref}
-\usepackage[nameinlink,noabbrev]{cleveref}
+
+\usepackage[
+    nameinlink,
+    noabbrev
+]{cleveref}
+
+% Names used by cleveref for code listings
+\crefname{lstlisting}{Code}{Codes}
+\Crefname{lstlisting}{Code}{Codes}
+
+% ============================================================
+% TABLE OF CONTENTS AND NUMBERING DEPTH
+% ============================================================
+
+% Level 0 = chapter
+% Level 1 = section
+% Level 2 = subsection
+% Level 3 = subsubsection
+
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{3}
 
 % ============================================================
 % DOCUMENT
@@ -79,62 +140,163 @@
 
 \begin{document}
 
-% ------------------------------------------------------------
+% ============================================================
 % FRONT MATTER
-% ------------------------------------------------------------
+% ============================================================
 
 \pagenumbering{roman}
 
+% ------------------------------------------------------------
+% TITLE PAGE
+% ------------------------------------------------------------
+
 \input{frontmatter/titlepage}
+\clearpage
+
+% ------------------------------------------------------------
+% DECLARATION OF ORIGINALITY
+% ------------------------------------------------------------
 
 \input{frontmatter/declaration}
+\clearpage
 
-\input{frontmatter/abstract}
+% ------------------------------------------------------------
+% ENGLISH ABSTRACT
+% ------------------------------------------------------------
+
+\input{frontmatter/abstract_en}
+\clearpage
+
+% ------------------------------------------------------------
+% GERMAN ABSTRACT
+% ------------------------------------------------------------
+
+\begin{otherlanguage}{ngerman}
+    \input{frontmatter/abstract_de}
+\end{otherlanguage}
+\clearpage
+
+% ------------------------------------------------------------
+% ACKNOWLEDGEMENTS
+% ------------------------------------------------------------
 
 \input{frontmatter/acknowledgements}
+\clearpage
+
+% ------------------------------------------------------------
+% TABLE OF CONTENTS
+% ------------------------------------------------------------
 
 \tableofcontents
 \clearpage
 
+% ------------------------------------------------------------
+% LIST OF FIGURES
+% ------------------------------------------------------------
+
 \listoffigures
 \clearpage
+
+% ------------------------------------------------------------
+% LIST OF TABLES
+% ------------------------------------------------------------
 
 \listoftables
 \clearpage
 
 % ------------------------------------------------------------
-% MAIN THESIS
+% LIST OF ABBREVIATIONS
 % ------------------------------------------------------------
+
+\input{frontmatter/abbreviations}
+\clearpage
+
+% ============================================================
+% MAIN THESIS
+% ============================================================
 
 \pagenumbering{arabic}
 
+% ------------------------------------------------------------
+% CHAPTER 1 - INTRODUCTION
+% ------------------------------------------------------------
+
 \input{chapters/01_introduction}
+
+% ------------------------------------------------------------
+% CHAPTER 2 - PRELIMINARIES
+% ------------------------------------------------------------
 
 \input{chapters/02_preliminaries}
 
+% ------------------------------------------------------------
+% CHAPTER 3 - LITERATURE REVIEW
+% ------------------------------------------------------------
+
 \input{chapters/03_literature_review}
+
+% ------------------------------------------------------------
+% CHAPTER 4 - METHODOLOGY
+% ------------------------------------------------------------
 
 \input{chapters/04_methodology}
 
+% ------------------------------------------------------------
+% CHAPTER 5 - RESULTS AND DISCUSSION
+% ------------------------------------------------------------
+
 \input{chapters/05_results_discussion}
+
+% ------------------------------------------------------------
+% CHAPTER 6 - CONCLUSIONS AND FUTURE WORK
+% ------------------------------------------------------------
 
 \input{chapters/06_conclusions_future_work}
 
 % ------------------------------------------------------------
-% REFERENCES
+% CHAPTER 7 - REFERENCES
 % ------------------------------------------------------------
 
-\printbibliography[
-    heading=bibintoc,
-    title={References}
-]
+\input{chapters/07_references}
 
 % ------------------------------------------------------------
-% APPENDICES
+% CHAPTER 8 - APPENDICES
 % ------------------------------------------------------------
+
+\input{chapters/08_appendices}
+
+% ============================================================
+% APPENDICES A-D
+% ============================================================
 
 \appendix
 
-\input{appendices/appendix_a}
+% ------------------------------------------------------------
+% APPENDIX A - SIMULATION FIGURES
+% ------------------------------------------------------------
+
+\input{appendices/appendix_a_simulation_figures}
+
+% ------------------------------------------------------------
+% APPENDIX B - PRESSURE AND FORECASTING FIGURES
+% ------------------------------------------------------------
+
+\input{appendices/appendix_b_pressure_forecasting}
+
+% ------------------------------------------------------------
+% APPENDIX C - ANALYTICAL AND SCENARIO TABLES
+% ------------------------------------------------------------
+
+\input{appendices/appendix_c_analytical_scenario_tables}
+
+% ------------------------------------------------------------
+% APPENDIX D - CODE AND IMPLEMENTATION SNIPPETS
+% ------------------------------------------------------------
+
+\input{appendices/appendix_d_code_implementation}
+
+% ============================================================
+% END DOCUMENT
+% ============================================================
 
 \end{document}

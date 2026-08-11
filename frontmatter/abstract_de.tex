@@ -1,0 +1,102 @@
+\chapter*{Abstract (Deutsch)}
+\addcontentsline{toc}{chapter}{Abstract (Deutsch)}
+
+\begin{center}
+    \textbf{Kurzfassung}
+\end{center}
+
+Der Internationale Flughafen Blaise Diagne (AIBD) im Senegal verzeichnet ein
+Ankunftsaufkommen, das sich nicht gleichmäßig über den Betriebstag verteilt,
+sondern in sogenannten Ankunftsbänken konzentriert. In diesen Zeitfenstern
+treffen die Passagier- und Gepäckströme mehrerer Flüge innerhalb kurzer Zeit
+auf dieselben Ressourcen der Grenzkontrolle, der Gepäckausgabe und des Zolls.
+Unter diesen Bedingungen reicht eine rein beschreibende Betriebsüberwachung
+nicht aus, da sie lediglich bereits eingetretene Zustände abbildet. Die
+vorliegende Arbeit entwickelt und evaluiert daher ein ankunftszentriertes
+Framework prädiktiver operativer Intelligenz, das deskriptive Analytik,
+kurzfristige Prognose, ereignisdiskrete Simulation und managementorientierte
+Entscheidungsunterstützung in einer durchgängigen Prozesskette verbindet.
+
+Über die FlightRadar24-Schnittstelle wurde ein historisches
+Flugbewegungsarchiv mit 50.385 Datensätzen erhoben und in einem fünfstufigen
+Validierungs- und Filterverfahren auf 22.270 validierte Datensätze zu
+kommerziellen Passagierankünften reduziert. Passagier- und Gepäckaufkommen
+wurden anhand des Flugzeugtyps über eine feste Sitzplatzzuordnung, einen
+Auslastungsfaktor von 0,82 sowie konstante Gepäckannahmen geschätzt und den
+operativen Belastungsstufen zugeordnet. Nach der Konstruktion zeitlicher,
+zyklischer sowie Lag- und Rolling-Merkmale wurden vier baumbasierte
+Ensemble-Verfahren für zwei Aufgaben trainiert: die Regression der
+Passagierbelastung des jeweils nächsten Ankunftsereignisses und die binäre
+Klassifikation von Hochlastphasen. Die betrieblichen Auswirkungen wurden
+mittels einer ereignisdiskreten AnyLogic-Simulation der Prozesskette
+Grenzkontrolle-Gepäckausgabe-Zoll-Ausgang über sechs Szenarien und einen
+Zeithorizont von zwölf Stunden bewertet; die Ergebnisse wurden in einem
+fünfseitigen Power-BI-Entscheidungsunterstützungssystem zusammengeführt.
+
+Die deskriptive Analyse identifiziert zwei wiederkehrende Ankunftsbänke
+zwischen 04:00 und 06:00 Uhr sowie zwischen 19:00 und 21:00 Uhr mit
+Spitzenwerten von 203,4 bzw. 210,8 geschätzten Passagieren, getrennt durch
+eine Schwachlastphase mit einem Minimum von 135,7 Passagieren um 11:00 Uhr.
+Da das Gepäckaufkommen über einen festen Multiplikator aus dem
+Passagieraufkommen abgeleitet wird, stellt die stündliche Gepäckreihe eine
+lineare Transformation der Passagierreihe dar ($r = 1{,}00$) und enthält kein
+eigenständiges zeitliches Signal; beide Reihen weisen damit dieselben
+Ankunftsbänke auf.
+
+LightGBM erzielte die beste Regressionsleistung
+(MAE: 34,06; RMSE: 46,61; $R^2$: 0,2366). Bei der Stauklassifikation wurde
+eine zunächst nahezu perfekte Modellgüte infolge von Informationsleckage
+durch eine zukunftsbezogene Prädiktorvariable diagnostiziert; nach deren
+Entfernung erreichte das eingesetzte LightGBM-Modell eine Genauigkeit von
+0,7805, einen F1-Wert von 0,4690 und einen ROC-AUC-Wert von 0,7914.
+
+Die Simulation weist die Gepäckausgabe als dominanten Engpass des
+Ausgangszustands aus: Eine alleinige Erhöhung der Gepäckkapazität senkte die
+durchschnittliche Verweildauer von 102 auf 83 Minuten und steigerte den
+Durchsatz von 484 auf 573 abgefertigte Passagiere bei zugleich höchstem
+Resilienzwert (0,76). Eine isolierte Verbesserung der Grenzkontrollkapazität
+reduzierte die Warteschlange dort um 94 Prozent, verlagerte den Engpass jedoch
+stromabwärts und erhöhte die Gepäckwarteschlange von 120 auf 198 Passagiere,
+ohne die Verweildauer zu verbessern.
+
+Die integrierte Optimierung erreichte mit 78 Minuten die kürzeste
+Verweildauer (minus 24 Prozent gegenüber dem Ausgangszustand). Bei einer
+Nachfragesteigerung um 50 Prozent erzielte eine warteschlangengesteuerte
+dynamische Intervention identische Ergebnisse wie die entsprechende statische
+Konfiguration, was auf eine betriebliche Sättigungsgrenze hindeutet. Drei
+unabhängig berechnete Verfahren - modellbasierte Merkmalsrelevanz,
+SHAP-Attribution und die Power-BI-Key-Influencers-Analyse - weisen
+übereinstimmend die Tageszeit als dominanten Einflussfaktor des Staurisikos
+aus.
+
+Der wissenschaftliche Beitrag besteht in einem integrierten,
+ankunftszentrierten Framework, das eine proxybasierte Nachfrageschätzung mit
+simulierten betrieblichen Wirkungen verknüpft und beides in eine
+managementorientierte Entscheidungsunterstützung für einen westafrikanischen
+Drehkreuzflughafen überführt - einen Kontext, der in der untersuchten
+Literatur bislang nicht vertreten ist. Ergänzend wird ein methodischer Befund
+berichtet, der die Nachfrageebene des Frameworks selbst einschränkt: Da sowohl
+das Passagier- als auch das Gepäckaufkommen aus dem Flugzeugtyp abgeleitet
+werden, ist die Gepäckbelastung eine deterministische lineare Transformation
+der Passagierbelastung und keine eigenständige Prognosegröße; zudem nimmt der
+Passagier-Proxy lediglich zehn verschiedene Werte an. Dies begrenzt, welche
+Aussagen flugzeugtypbasierte Proxys über die ankunftsseitige Nachfrage
+zulassen.
+
+Wesentliche Einschränkungen sind entsprechend der Schätzung des Passagier-
+und Gepäckaufkommens anhand des Flugzeugtyps anstelle erhobener Zählwerte, die
+moderate Trefferquote des eingesetzten Klassifikators sowie die Beschränkung
+auf einmalige Simulationsläufe ohne Wiederholungen.
+
+\vspace{0.5cm}
+
+\noindent
+\textbf{Schlagwörter:}
+prädiktive operative Intelligenz;
+Ankunftsmanagement am Flughafen;
+Passagierstromprognose;
+Gepäckbelastung;
+Stauklassifikation;
+ereignisdiskrete Simulation;
+Entscheidungsunterstützungssystem;
+Internationaler Flughafen Blaise Diagne.
