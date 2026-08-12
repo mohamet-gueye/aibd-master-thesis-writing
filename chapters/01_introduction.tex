@@ -1,2 +1,109 @@
 \chapter{Introduction}
 \label{chap:introduction}
+
+\section{Research Context}
+\label{sec:research-context}
+
+Airports are complex operational environments in which aircraft schedules, passenger movements, baggage flows, security procedures, immigration processes, customs controls, and staff activities must be coordinated within limited spaces and time windows. The interdependence of these processes means that disruption or insufficient capacity at one stage can rapidly affect subsequent stages of the passenger journey. This challenge is particularly significant in arrival operations, where several flights landing in a short period can generate concentrated demand at immigration counters, baggage-reclaim facilities, customs checkpoints, and terminal exits.
+
+As passenger volumes increase and travel patterns become more dynamic, airport operators face growing pressure to maintain operational efficiency, anticipate congestion, allocate resources effectively, and provide a positive passenger experience. Conventional operational monitoring can indicate what is currently happening within an airport, but it does not necessarily provide sufficient advance warning of future passenger or baggage pressure. Consequently, airports increasingly require predictive and decision-support capabilities that enable managers to identify pressure periods before they develop into operational bottlenecks.
+
+Blaise Diagne International Airport (AIBD) provides a relevant context for examining these challenges. The airport opened in December 2017 as a replacement for Léopold Sédar Senghor International Airport and was developed as a modern gateway for Senegal and the wider West African region. Located approximately 43 kilometers from Dakar, AIBD benefits from Senegal's position at the westernmost point of Africa. This location serves as a connection point between Africa, Europe, and the Americas, as well as a gateway to the countries of the Economic Community of West African States \parencite{demir2025speaker}.
+
+AIBD was initially designed to accommodate approximately three million passengers annually. The airport handled 2.6 million passengers in 2022, while passenger traffic increased to 2.94 million in 2024. Expansion plans identify a capacity objective of five million passengers per year by 2025 and ten million passengers by 2035 \parencite{demir2025speaker}. These developments reflect AIBD's ambition to strengthen its position as a major regional aviation hub. At the same time, continued growth places increasing demands on the airport's infrastructure, operational resources, and ability to coordinate arrival-side services.
+
+AIBD's modernization objectives extend beyond physical infrastructure. Airport leadership has emphasized the importance of shifting from bureaucratic operational routines to a customer-oriented culture grounded in efficiency, professionalism, and passenger care \parencite{demir2025speaker}. This transformation is closely connected to the Senegalese concept of Teranga, which represents hospitality, warmth, and generosity. Within AIBD's operational context, the objective is therefore not simply to process more passengers, but to combine operational efficiency and technological modernization with a welcoming, human-centered passenger experience.
+
+Technology and data-driven decision-making have an important role in achieving this balance. AIBD already collects passenger feedback through digital surveys, terminal kiosks, social-media channels, airlines, and other stakeholder interactions \parencite{demir2025speaker}. Real-time feedback mechanisms enable operational teams to identify service issues. However, feedback and monitoring systems are primarily responsive: they indicate that a problem has occurred or is currently occurring. Predictive analytics offers a complementary capability by estimating when passenger peaks, baggage loads, and congestion periods are likely to occur, allowing operational consequences to be avoided before they become severe.
+
+This need is consistent with broader developments in airport operational research. Existing studies have applied time-series models, machine-learning methods, queueing approaches, simulation, optimization, and passenger-tracking technologies to problems such as flight delays, passenger flows, queue formation, and airport capacity \parencite{orsini2019neural,shao2022predicting,pang2024machine,cao2025robust,sang2026integrating}. Nevertheless, the available literature remains concentrated on airports in Europe, North America, and Asia. Sub-Saharan African and West African airport environments remain comparatively underrepresented. Furthermore, research frequently addresses individual operational problems in isolation, while integrated frameworks combining passenger-pressure forecasting, baggage-demand analysis, simulation-based evaluation, and manager-facing decision support remain limited. Explicit forecasting of baggage demand and reclaim pressure is also less developed than research concerning flight delays or passenger queues.
+
+Against this background, the present thesis investigates the application of predictive operational intelligence to airport arrival management at AIBD. Predictive operational intelligence is understood in this study as the integration of operational data, predictive analytics, simulation-based evaluation, performance indicators, and decision-support mechanisms. Its purpose is not only to describe airport conditions, but also to anticipate pressure, evaluate possible operational responses, and communicate actionable information to decision-makers.
+
+The study is grounded in a validated master dataset containing 22,270 commercial passenger-arrival records. The dataset includes operational and temporal variables used to estimate passenger volumes, baggage demand, and hourly pressure patterns. The validated data are subsequently used to support forecasting activities, congestion classification, AnyLogic simulation, operational performance evaluation, and Power BI decision-support visualizations.
+
+The resulting research framework combines Python-based operational analytics, discrete-event simulation in AnyLogic, and an interactive Power BI Decision Support System. Through this integration, the study examines how historical and operational arrival data can be transformed into predictive indicators and, subsequently, into information that supports airport resource planning, congestion mitigation, operational monitoring, and scenario-based decision-making.
+
+\section{Problem Context and Problem Statement}
+\label{sec:problem-context-statement}
+
+Arrival operations at AIBD become particularly vulnerable when several commercial flights converge within short time intervals. These arrival banks can generate simultaneous increases in passenger volumes and baggage demand. Passengers from the arriving flights move through interconnected processes that include immigration, baggage reclaim, customs inspection, and terminal exit. When passenger demand temporarily exceeds available processing or service capacity, queues can accumulate, and congestion can propagate across the arrival system.
+
+Immigration counters may become overloaded when staffing levels do not correspond to the number and timing of arriving passengers. Baggage-reclaim operations may experience increased pressure when multiple aircraft require baggage-handling capacity simultaneously. Customs checkpoints can become an additional bottleneck when inspection demand and passenger flows are not aligned with available resources. The consequences may include longer queues, extended passenger system times, slower baggage delivery, increased staff workload, and inconsistent service quality.
+
+These operational challenges are intensified by AIBD's continued passenger growth and by the requirement to coordinate resources across different organizations. Arrival management involves the airport operator, immigration authorities, customs services, ground-handling companies, airlines, baggage-handling teams, security personnel, and transportation providers. Each stakeholder performs a distinct role, but their activities are operationally interdependent. Effective arrival management, therefore, requires timely information and coordination across institutional boundaries.
+
+AIBD's distance from Dakar adds another dimension to the passenger experience \parencite{demir2025speaker}. Delays within the arrival terminal may affect passengers' onward journeys, including their ability to access scheduled transport or complete time-sensitive activities. Predictability is therefore relevant not only to internal airport efficiency but also to the wider passenger journey.
+
+The effects of arrival congestion also differ among stakeholder groups. Citizens and tourists expect a smooth and welcoming arrival experience that reflects Senegal's culture of Teranga. Business travelers require predictable processing times to protect schedules and productivity. Immigration officers require advance information about passenger peaks to support counter allocation and queue management. Airline and ground-handling teams depend on efficient arrival processes to maintain baggage-delivery performance, operational coordination, and customer satisfaction. Airport managers require consolidated information to identify emerging pressures, compare operational alternatives, and coordinate interventions.
+
+AIBD has already implemented real-time passenger feedback and operational alert mechanisms \parencite{demir2025speaker}. These systems are valuable for identifying current service problems and supporting immediate responses. However, they do not fully address the need to anticipate operational pressure. Monitoring explains what is happening, whereas predictive operational intelligence estimates what is likely to happen and supports decisions about what should be done in response.
+
+The central problem addressed by this thesis is therefore the gap between operational monitoring and proactive decision-making. Without reliable short-horizon forecasts, managers must respond to congestion after queues and service delays have already formed. Such reactive measures may result in delayed staff adjustments, inefficient resource deployment, inconsistent passenger service, and limited capacity to compare alternative operational interventions.
+
+Existing airport research also demonstrates a gap between analytical model development and practical operational implementation \parencite{cao2025robust, pang2024machine}. Many studies evaluate prediction accuracy or optimize an individual airport process, but do not translate their outputs into an integrated management interface. Airport decision-makers require more than numerical predictions: they require understandable pressure classifications, operational performance indicators, threshold alerts, scenario comparisons, and recommendations connected to specific resource-planning decisions.
+
+Accordingly, the problem statement of this thesis is formulated as follows:
+
+\begin{samepage}
+\begin{quote}
+\itshape
+Blaise Diagne International Airport requires a predictive, data-driven approach to anticipate arrival passenger pressure, baggage demand, and congestion periods before they develop into operational bottlenecks. Existing monitoring and feedback mechanisms provide information on current operational conditions but offer limited short-horizon forecasting and decision-support capabilities for translating predicted pressure into staffing, baggage capacity, queue management, and operational intervention strategies.
+\end{quote}
+\end{samepage}
+
+Addressing this problem requires an integrated framework that connects four functions. First, operational data must be transformed into reliable indicators of passenger volume, baggage volume, and congestion. Second, temporal and operational patterns must be analyzed to identify the factors associated with pressure. Third, predictive outputs must be evaluated in an operational environment through simulation and performance indicators. Finally, the results must be presented through a decision-support interface that airport managers and other stakeholders can interpret and use.
+
+\section{Research Aim and Objectives}
+\label{sec:research-aim-objectives}
+
+The overall aim of this thesis is to design and evaluate a predictive operational intelligence framework for arrival management at Blaise Diagne International Airport. The framework is intended to analyze operational patterns, anticipate passenger and baggage pressure, evaluate congestion-management strategies, and translate analytical outputs into actionable decision support.
+
+The study follows the sequential logic of explain, predict, and support decisions.
+
+\subsection*{Objective 1: Explain arrival-side operational patterns}
+\phantomsection
+\addcontentsline{toc}{subsection}{Objective 1: Explain arrival-side operational patterns}
+
+The first objective is to identify the temporal and operational factors that influence arrival-passenger pressure, baggage demand, and congestion risk at AIBD. This includes analyzing how demand varies by arrival hour and other operational characteristics and identifying recurring pressure periods and potential bottlenecks.
+
+The explanatory stage establishes the operational foundation of the research. It transforms individual commercial flight arrival records into structured indicators representing estimated passenger volumes, baggage loads, hourly demand, and pressure classifications. These indicators allow arrival activity to be interpreted in a manner relevant to airport operations rather than as a collection of isolated flight records.
+
+\subsection*{Objective 2: Predict passenger, baggage, and congestion pressure}
+\phantomsection
+\addcontentsline{toc}{subsection}{Objective 2: Predict passenger, baggage, and congestion pressure}
+
+The second objective is to develop and evaluate predictive models for arrival passenger pressure, baggage demand, and congestion periods using FR24-like commercial flight arrival data. The emphasis is placed on short-horizon forecasting because predictions must be available early enough to support practical operational responses.
+
+The predictive stage considers temporal and operational patterns within the available data and focuses on producing outputs that are both accurate and operationally interpretable. The purpose of forecasting is not limited to minimizing statistical error. Predictions must also distinguish between operationally meaningful pressure states and provide sufficient advance information to support resource planning.
+
+\subsection*{Objective 3: Support operational and managerial decision-making}
+\phantomsection
+\addcontentsline{toc}{subsection}{Objective 3: Support operational and managerial decision-making}
+
+The third objective is to translate passenger and baggage forecasts into simulation metrics and interactive decision-support information. Predictive indicators are integrated with the AnyLogic simulation environment to evaluate arrival operations under baseline, capacity-optimization, peak-stress, dynamic-intervention, and integrated-optimization scenarios.
+
+The simulation evaluates operational measures, including passenger system time, immigration queue size, baggage queue size, customs queue size, passenger throughput, congestion severity, and operational resilience. These indicators connect predicted demand to its potential consequences for airport performance.
+
+The analytical and simulation outputs are subsequently integrated into a Power BI Decision Support System. The dashboard environment supports operational monitoring, scenario comparison, congestion-risk assessment, dynamic intervention planning, executive recommendations, and explanation of the factors associated with operational pressure. In this way, the third objective converts analytical findings into information that can support staffing, baggage handling, queue management, and broader resource-planning decisions.
+
+Together, the three objectives establish a continuous analytical process. The explanatory component identifies the patterns and factors associated with pressure. The predictive component estimates when and to what extent pressure may occur. The decision-support component evaluates the operational implications of those predictions and communicates appropriate management information.
+
+\section{Contributions of the Thesis}
+\label{sec:contributions-thesis}
+
+This thesis makes several interconnected contributions to airport operational analytics and to the management of arrival operations at AIBD.
+
+The first contribution is the development of an integrated predictive operational intelligence framework specifically focused on airport arrivals. Rather than addressing flight delays, passenger queues, baggage demand, simulation, or dashboard reporting as separate problems, the framework connects operational data processing, pressure estimation, forecasting, simulation, KPI evaluation, and decision support. This arrival-centric design reflects the interconnected nature of immigration, baggage reclaim, customs, and passenger exit processes, and it provides a framework tailored to the operational conditions of a West African airport, contributing to an area that remains underrepresented in the airport-analytics literature \parencite{orsini2019neural,shao2022predicting,pang2024machine,cao2025robust,sang2026integrating}.
+
+The second contribution is the construction and validation of passenger- and baggage-pressure indicators derived from the master dataset of 22,270 commercial arrival records. The indicators convert flight-level operational data into hourly passenger-demand estimates, baggage-demand estimates, and operational pressure classifications, providing a consistent analytical basis for forecasting, congestion analysis, simulation input preparation, and dashboard reporting. Passenger and baggage demand are treated as related but operationally distinct pressures, giving explicit attention to baggage-reclaim capacity as a constraint separate from passenger processing; as Section 5.1 establishes, the baggage series is derived from the passenger estimate by a fixed multiplier, so the distinction is one of operational consequence rather than of independent demand.
+
+The third contribution is the structured integration of predictive indicators with an AnyLogic discrete-event simulation of the arrival process, representing passenger generation, immigration processing, baggage reclaim, customs inspection, passenger exit, queue accumulation, and congestion propagation. Through multiple operational scenarios, the framework supports the evaluation of capacity changes, baggage-processing improvements, peak-hour stress conditions, dynamic interventions, and integrated optimization, so that predictions can be assessed in relation to operational outcomes such as queues, processing time, throughput, congestion severity, and resilience rather than only through statistical accuracy.
+
+The fourth contribution is the development of a Power BI Decision Support System that translates analytical and simulation outputs into manager-facing operational intelligence. The dashboard platform includes operational monitoring, scenario comparison, dynamic intervention monitoring, executive decision support, and explainable operational insights, presenting passenger and baggage pressure indicators, KPI summaries, congestion thresholds, scenario rankings, recommended actions, and information concerning the factors that influence congestion. It therefore addresses the practical gap between producing forecasts and enabling managers to interpret and act upon them.
+
+The fifth contribution is the incorporation of a multi-stakeholder perspective into the design and interpretation of predictive operational intelligence. The framework recognises that arrival pressure affects passengers, immigration officers, customs personnel, airport managers, airlines, ground handlers and baggage-service teams in different ways, so that operational improvement is not evaluated solely through technical efficiency: reduced queues, more predictable baggage delivery, better resource allocation and clearer operational coordination also contribute to passenger comfort, staff working conditions, airline performance and the wider image of Senegal as an international destination.
+
+The study consequently positions technological modernization as a means of supporting, rather than replacing, human-centered service. Predictive analytics, simulation, and dashboards are used to reduce uncertainty and operational stress while preserving the hospitality culture represented by Teranga \parencite{demir2025speaker}. This aligns the thesis's technical contribution with AIBD's broader objective of combining innovation, efficiency, professionalism, and personal service.
+
+Taken together, these contributions demonstrate how arrival pressure can be transformed from a predominantly reactive operational challenge into a structured, proactive decision-making process. By integrating validated operational data, forecasting, simulation-based evaluation, and interactive decision support, the thesis provides a practical and interpretable framework for strengthening arrival management at AIBD.
