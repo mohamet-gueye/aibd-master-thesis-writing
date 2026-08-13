@@ -1,2 +1,959 @@
 \chapter{Methodology}
 \label{chap:methodology}
+
+This chapter presents the methodological framework for designing and evaluating predictive operational intelligence for arrival management at Blaise Diagne International Airport. The methodology follows the analytical sequence established in the preceding chapters: operational data are first collected and validated, engineered into interpretable temporal, operational, and pressure indicators, used to forecast short-horizon arrival pressure and congestion, evaluated operationally through discrete-event simulation, and finally integrated into a Power BI Decision Support System.
+
+The methodological design connects six components: data sources, feature engineering, forecasting models, the AnyLogic simulation framework, key performance indicators, and the Power BI Decision Support System. Each component is described below using the datasets, notebooks, model artifacts, simulation files, and dashboard exports produced during the project, so that the reported figures, thresholds, and configurations correspond directly to the implemented pipeline rather than to a generic description of the method.
+
+\section{Data Sources}
+\label{sec:data-sources}
+
+The empirical foundation of the study is a historical flight-tracking archive obtained through the FlightRadar24 (FR24) API for Blaise Diagne International Airport (ICAO code \texttt{GOBD}). Data collection was implemented in Python using the \texttt{requests} library against the FR24 API endpoint (\url{https://fr24api.flightradar24.com/api}) and was carried out in three chronological phases: an initial phase covering 13 May 2024 to 31 August 2024, a second phase covering 1 September 2024 to 31 December 2024, and a subsequent collection covering 1 January 2025 to 13 May 2026.
+
+The three phases were concatenated and de-duplicated using \path{src/preprocessing/merge_all_historical_data.py} and \path{merge_historical_phases.py} into a single historical archive, \path{historical_arrivals_full.csv}, containing 50,385 flight records across 15 raw fields: \texttt{fr24\_id}, \texttt{flight}, \texttt{callsign}, \texttt{operating\_as}, \texttt{painted\_as}, \texttt{type}, \texttt{reg}, \texttt{orig\_icao}, \texttt{orig\_iata}, \texttt{dest\_icao}, \texttt{dest\_iata}, \texttt{datetime\_takeoff}, \texttt{datetime\_landed}, \texttt{flight\_ended}, and \texttt{collection\_date}.
+
+This raw archive contains both arrivals and departures at GOBD. The master data-validation pipeline (\path{notebooks/preprocessing/02_data_validation.ipynb}, duplicated as \path{docs/master_data_validation.pdf}) first assessed data quality: \texttt{painted\_as} was missing for 4,007 records, \texttt{flight} for 3,276, \texttt{operating\_as} for 2,278, \texttt{datetime\_landed} for 1,997, \texttt{orig\_icao} and \texttt{orig\_iata} for around 1,945, \texttt{datetime\_takeoff} for 1,475, \texttt{dest\_icao}, \texttt{dest\_iata}, and \texttt{callsign} for around 1,217, \texttt{reg} for 1,137, and \texttt{type} for 492 records; no duplicate rows were found. The pipeline then applied a sequence of validation and filtering steps summarised in \Cref{tab:data-validation-pipeline}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Record counts through the data validation and passenger-filtering pipeline (\texttt{notebooks/preprocessing/02\_data\_validation.ipynb}).}
+    \label{tab:data-validation-pipeline}
+
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{6pt}
+
+    \begin{tabularx}{\textwidth}{
+        |>{\centering\arraybackslash}p{1.2cm}
+        |>{\raggedright\arraybackslash}X
+        |>{\raggedleft\arraybackslash}p{3.2cm}|
+    }
+        \hline
+        \textbf{Step} &
+        \textbf{Operation} &
+        \textbf{Records remaining}
+        \\
+        \hline
+
+        1 &
+        Raw historical archive (2024--2026 FR24 collection, merged and de-duplicated) &
+        50,385
+        \\
+        \hline
+
+        2 &
+        Filter to arrivals only (\texttt{dest\_icao == "GOBD"}) &
+        25,164
+        \\
+        \hline
+
+        3 &
+        Remove records with missing \texttt{datetime\_landed} &
+        24,340
+        \\
+        \hline
+
+        4 &
+        Remove records with invalid/uncoercible datetime values &
+        24,340
+        \\
+        \hline
+
+        5 &
+        Remove non-passenger flights (cargo, freighter, private, military) &
+        22,270
+        \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+The removal of non-passenger flights in step 5 used a rule-based classification function, \texttt{is\_non\_passenger\_flight}, applied row-wise to the \texttt{operating\_as}, \texttt{callsign}, and aircraft-type fields. A flight was classified as non-passenger and excluded if any of the following conditions were met: the operating carrier code matched a defined set of cargo airlines (FDX, FX, UPS, 5X, DHL, DHK, CLX, BCS, GTI, ETC); the aircraft type matched a defined set of freighter types (B77F, B763F, B744F, A332F, MD11F, AN12, A400); the callsign matched the regular expression for private/business-aviation registration prefixes (\verb!^(N|D|F|9H|OE|HB)[A-Z0-9]+$!); or the callsign began with a recognised military prefix (BAF, FAF, RAF, RCH, NATO).
+
+Applying this filter to the 24,340 arrival records with valid timestamps produced the final validated set of 22,270 commercial passenger-arrival records, exported as \path{data/final/aibd_commercial_arrivals_master.csv} with 23 columns. This file constitutes the master dataset referenced throughout the thesis.
+
+Because the FR24 archive records flight movements rather than Passenger counts directly, passenger and baggage demand were estimated from aircraft type. Each arrival record was mapped to an assumed seat capacity using the fixed lookup in \Cref{tab:aircraft-seat-capacity}, with a default of 150 seats applied to aircraft types not present in the map.
+
+Estimated passengers were then computed as \texttt{estimated\_seats} multiplied by a fixed load factor of 0.82. Baggage demand was derived from the resulting passenger estimate using an assumed average of two bags per Passenger (\texttt{AVG\_BAGS\_PER\_PASSENGER = 2}) and an average bag weight of 23 kilograms (\texttt{AVG\_BAG\_WEIGHT\_KG = 23}), giving \texttt{estimated\_bags} and \texttt{estimated\_baggage\_weight\_kg}.
+
+These assumptions are constants defined directly in the preprocessing notebook and are applied uniformly across the dataset; they are not fitted or varied by route, airline, or season. The bags-per-passenger constant expresses an average baggage volume per arriving Passenger at the level of the flight. It should not be read as a claim that every individual traveler collects two items.
+
+It quantifies the baggage arriving on the aircraft rather than the number of passengers who proceed to the reclaim hall; the proportion of arriving passengers routed through baggage reclaim is modeled separately within the simulation, using a has-baggage probability of 0.75 under normal demand and 0.85 under the peak-stress configurations (Section 4.4.2 and Chapter 5, Table 5.1). The reclaim-hall load represented in the simulation is therefore not simply twice the passenger estimate reported here.
+
+Two properties of this estimation procedure follow directly from its construction and are stated here because they bound the interpretation of every result derived from it.
+
+First, because \texttt{estimated\_bags} is \texttt{estimated\_passengers} multiplied by a constant, the two variables are perfectly correlated across the dataset (Pearson $r = 1.0000$, $n = 22{,}270$): the baggage series is a linear rescaling of the passenger series. It contains no information that the passenger series does not. Baggage demand is therefore treated in this thesis as a capacity-conversion factor that translates passenger demand into baggage-reclaim resource requirements, rather than as an independently observed or forecast quantity.
+
+Second, because \texttt{estimated\_passengers} is the product of a twelve-entry seat-capacity lookup and a single constant load factor, it resolves to only ten distinct values across all 22,270 records. Predicting it is therefore closer to predicting the seat class of the next arriving aircraft than to forecasting a continuous demand process, and this ceiling is reflected in the regression results reported in Section 4.3.1 and discussed in Chapter 5, Section 5.2.1.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Assumed seat capacity by aircraft type used for passenger estimation (\texttt{notebooks/preprocessing/02\_data\_validation.ipynb}).}
+    \label{tab:aircraft-seat-capacity}
+
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{6pt}
+
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{2.2cm}
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{2.2cm}|
+    }
+        \hline
+        \textbf{Aircraft type} &
+        \textbf{Seats} &
+        \textbf{Aircraft type} &
+        \textbf{Seats}
+        \\
+        \hline
+
+        A319 & 140 & A333 & 290 \\
+        \hline
+
+        A320 & 180 & A332 & 260 \\
+        \hline
+
+        A321 & 220 & B763 & 260 \\
+        \hline
+
+        B737 & 160 & B77W & 396 \\
+        \hline
+
+        B738 & 189 & B788 & 242 \\
+        \hline
+
+        B38M & 189 & Other (default) & 150 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+On this basis, the \texttt{estimated\_passengers} variable across the 22,270 validated arrivals has a mean of 160.5 passengers, a standard deviation of 51.5, a minimum of 114.8, a median of 147.6, and a maximum of 324.7 passengers per flight.
+
+Figure B.1 in Appendix B presents the resulting distribution, whose multimodal shape reflects the discrete seat-capacity bands of \Cref{tab:aircraft-seat-capacity} combined with the fixed 0.82 load factor rather than a smooth demand process. This distribution, along with its hourly aggregation, provided input for the Passenger- and baggage-pressure analysis described in Section 4.2.
+
+From the validated master dataset, the pipeline produced a set of derived data products that fed the subsequent analytical, simulation, and dashboard stages of the framework: \path{hourly_passenger_pressure.csv} and \path{hourly_baggage_pressure.csv} (hour-of-day aggregations used in Section 4.2), \path{feature_engineered_airport_dataset.csv} and \path{ml_dataset.csv} (the engineered forecasting datasets described in Sections 4.2 and 4.3), the six AnyLogic input tables in \path{data/processed/anylogic/} (Section 4.4), and \path{scenario_kpi_results.csv} (the simulation-scenario output table that drives the Power BI Decision Support System described in Section 4.6).
+
+A supplementary operational reference file, \path{DSS_Arrival_Belt.xlsx}, records planned and estimated landing times, flight status, airline, origin, and baggage-belt assignment for individual flights and was used to inform the baggage-reclaim representation in the simulation and dashboard layers.
+
+Retaining a single validated master dataset as the common origin of all derived products ensured that the passenger- and baggage-demand definitions used in forecasting, simulation, and dashboard reporting remained consistent with one another.
+
+\section{Feature Engineering}
+\label{sec:feature-engineering}
+
+Feature engineering was implemented in
+\path{notebooks/forecasting/04_feature_engineering.ipynb},
+transforming the 22,270-record master dataset into a machine-learning-ready table.
+The process comprised temporal feature construction, cyclical encoding,
+operational-period and peak-hour labeling, Lag and rolling-window construction,
+and the definition of the forecasting targets.
+
+\subsection{Temporal and cyclical features}
+\label{subsec:temporal-cyclical-features}
+
+The \nolinkurl{collection_date} and \nolinkurl{datetime_landed} fields were
+converted to timezone-aware datetime objects, from which
+\nolinkurl{day_of_week} (0--6),
+\nolinkurl{is_weekend} (1 if \nolinkurl{day_of_week} is Saturday or Sunday),
+\nolinkurl{week_of_year}, and \nolinkurl{quarter} were derived.
+
+Because hour-of-day and month are periodic rather than linear quantities,
+\nolinkurl{arrival_hour} and \nolinkurl{arrival_month} were each transformed
+into a pair of cyclical features using sine and cosine functions:
+
+\[
+\begin{aligned}
+\texttt{hour\_sin}
+    &= \sin\left(2\pi \cdot \frac{\texttt{arrival\_hour}}{24}\right), \\
+\texttt{hour\_cos}
+    &= \cos\left(2\pi \cdot \frac{\texttt{arrival\_hour}}{24}\right), \\
+\texttt{month\_sin}
+    &= \sin\left(2\pi \cdot \frac{\texttt{arrival\_month}}{12}\right), \\
+\texttt{month\_cos}
+    &= \cos\left(2\pi \cdot \frac{\texttt{arrival\_month}}{12}\right).
+\end{aligned}
+\]
+
+This encoding allows the models to represent, for example, that 23:00 and
+00:00 are temporally adjacent and that December and January are adjacent
+months, which a linear hour- or month-variable cannot represent.
+
+Two binary operational flags were derived directly from
+\nolinkurl{arrival_hour}: \nolinkurl{is_night_operation}, set to 1 when the
+arrival hour was 22:00 or later or 05:00 or earlier, and
+\nolinkurl{is_peak_hour}, set to 1 when the arrival hour fell between 05:00
+and 07:00 inclusive or between 16:00 and 21:00 inclusive.
+
+A categorical \nolinkurl{operational_period} label was then assigned using a
+rule-based mapping (\nolinkurl{np.select}) over \nolinkurl{arrival_hour}:
+``Morning Peak'' for hours 5--11, ``Afternoon Operations'' for hours 12--17,
+``Evening Peak'' for hours 18--23, and ``Night Operations'' as the default
+(hours 0--4).
+
+This four-category labeling scheme, used in the feature-engineering and
+forecasting notebooks, is distinct from the simpler four-band
+operational-period lookup table later defined for the AnyLogic simulation
+(Morning Peak 05:00--09:00, Midday Normal 10:00--16:00,
+Evening Peak 17:00--21:00, Night Operations 22:00--04:00,
+described in Section 4.4); both schemes are retained here exactly as
+implemented in their respective pipeline stages rather than reconciled into
+a single definition.
+
+\subsection{Lag, rolling, and momentum features}
+\label{subsec:lag-rolling-momentum-features}
+
+Because arrival-side pressure depends on the recent sequence of flights and not only on the current record, the dataset was sorted chronologically by \nolinkurl{datetime_landed} and a set of history-based features was constructed: \nolinkurl{lag_1_passengers}, \nolinkurl{lag_3_passengers} and \nolinkurl{lag_6_passengers} (the estimated Passenger count one, three and six arrivals earlier); \nolinkurl{rolling_mean_3} and \nolinkurl{rolling_mean_6} (the rolling mean of \nolinkurl{estimated_passengers} over the previous three and six arrivals); \nolinkurl{rolling_bags_mean_3} (the rolling mean of \nolinkurl{estimated_bags} over the previous three arrivals, originally computed as \nolinkurl{rolling_baggage_3} and retained under both names at different pipeline stages); and \nolinkurl{pressure_change} (the first difference of \nolinkurl{estimated_passengers} between consecutive arrivals). These Lag and rolling features were consistently identified in the subsequent modeling stage (Section 4.3) as being among the most influential predictors of both future passenger pressure and congestion risk.
+
+\subsection{Passenger- and baggage-pressure classification}
+\label{subsec:pressure-classification}
+
+Passenger pressure was classified into four operational bands using fixed
+thresholds calibrated on the average hourly estimated-passenger series
+(\path{notebooks/analytics/03_passenger_pressure_analysis.ipynb}):
+``Critical'' for 230 or more average passengers per hour, ``High'' for
+190 to 229, ``Moderate'' for 160 to 189, and ``Low'' below 160.
+
+Applying this classification to the 24-hour average profile yielded an
+operational threshold of 160 passengers as the boundary between routine
+and elevated conditions, which is shown explicitly as a reference line
+on the Power BI dashboard (Section 4.6).
+
+Baggage pressure was classified separately into three bands
+(``Low'', ``Moderate'', and ``High'') using the 33rd and 66th percentiles
+(\texttt{q1}, \texttt{q2}) of the average hourly
+\nolinkurl{estimated_bags} series as cut points, rather than fixed absolute
+thresholds.
+
+Both classification rules were reproduced independently as Power BI
+calculated columns using nested \texttt{IF} logic for passenger pressure
+and the \texttt{PERCENTILEX.INC} function (evaluated at 0.33 and 0.66)
+for baggage pressure, ensuring that the same operational definitions are
+applied consistently in the Python analytics and in the dashboard layer.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Passenger- and baggage-pressure classification rules applied to hourly aggregated demand}
+    \label{tab:pressure-classification-rules}
+
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{6pt}
+
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}p{3.0cm}
+        |>{\raggedright\arraybackslash}p{2.4cm}
+        |>{\raggedright\arraybackslash}X|
+    }
+        \hline
+        \textbf{Pressure type} &
+        \textbf{Band} &
+        \textbf{Rule}
+        \\
+        \hline
+
+        Passenger &
+        Critical &
+        $\geq$ 230 average passengers/hour
+        \\
+        \hline
+
+        Passenger &
+        High &
+        190--229
+        \\
+        \hline
+
+        Passenger &
+        Moderate &
+        160--189
+        \\
+        \hline
+
+        Passenger &
+        Low &
+        $<$ 160
+        \\
+        \hline
+
+        Baggage &
+        High &
+        $>$ 66th percentile of hourly \nolinkurl{estimated_bags}
+        \\
+        \hline
+
+        Baggage &
+        Moderate &
+        33rd--66th percentile
+        \\
+        \hline
+
+        Baggage &
+        Low &
+        $\leq$ 33rd percentile
+        \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+Applying these classification rules to the 24-hour average profile
+establishes the empirical pressure structure on which the remainder of
+the framework depends: two distinct peaks corresponding to arrival banks,
+centered on 05:00--06:00 and 20:00--21:00, separated by a sustained
+low-pressure period between 07:00 and 14:00 and a moderate afternoon
+build-up between 15:00 and 17:00.
+
+Because \nolinkurl{estimated_bags} is a fixed multiple of
+\nolinkurl{estimated_passengers} (\Cref{sec:data-sources}), the baggage
+profile is identical in shape; the two differ only in the classification
+rule applied to them.
+
+These profiles are empirical outcomes of the classification rather than
+components of the method, and are therefore presented and analyzed in
+Chapter 5, Section 5.1 (Figure 5.1), with the fully annotated Passenger
+and baggage series provided as Figures B.2 and B.3.
+
+The structure they establish determines the 160-passenger operational
+threshold reported above and informs the four-band operational-period
+scheme used in the AnyLogic simulation (Section 4.4).
+
+\subsection{Forecasting targets}
+\label{subsec:forecasting-targets}
+
+Three forecasting targets were constructed from the engineered dataset. \nolinkurl{future_passenger_pressure} and \nolinkurl{future_baggage_pressure} were defined as the one-step-ahead (\texttt{shift(-1)}) values of \nolinkurl{estimated_passengers} and \nolinkurl{estimated_bags}, respectively, so that each record's features are used to predict the demand associated with the next arrival. The binary congestion classification target, \nolinkurl{is_high_congestion}, was defined as 1 when \nolinkurl{future_passenger_pressure} was at or above a threshold of 180 passengers (the 75th percentile of \nolinkurl{estimated_passengers} in the engineered dataset, computed as 180.40 and rounded to 180) and 0 otherwise.
+
+Rows containing \texttt{NaN} values introduced by the Lag, rolling, and shift operations were removed (\texttt{dropna}), reducing the engineered dataset from 22,270 to 19,909 rows across 45 intermediate columns. A final feature set of 20 numerical features (\nolinkurl{estimated_passengers}, \nolinkurl{estimated_bags}, \nolinkurl{estimated_baggage_weight_kg}, \nolinkurl{arrival_hour}, \nolinkurl{arrival_day}, \nolinkurl{arrival_month}, \nolinkurl{day_of_week}, \nolinkurl{week_of_year}, \nolinkurl{quarter}, \nolinkurl{hour_sin}, \nolinkurl{hour_cos}, \nolinkurl{month_sin}, \nolinkurl{month_cos}, \nolinkurl{lag_1_passengers}, \nolinkurl{lag_3_passengers}, \nolinkurl{rolling_mean_3}, \nolinkurl{rolling_bags_mean_3}, \nolinkurl{is_peak_hour}, \nolinkurl{is_night_operation}, \nolinkurl{is_weekend}), 5 categorical features (\nolinkurl{type}, \nolinkurl{operating_as}, \nolinkurl{orig_iata}, \nolinkurl{weekday_name}, \nolinkurl{operational_period}) and 3 target variables (\nolinkurl{future_passenger_pressure}, \nolinkurl{future_baggage_pressure}, \nolinkurl{is_high_congestion}) was assembled into \path{feature_engineered_airport_dataset.csv} (19,909 rows, 28 columns). After one-hot encoding of the categorical features (\texttt{pd.get\_dummies}, \texttt{drop\_first = True}) and removal of two further rows containing residual missing values, the final machine-learning dataset, \path{ml_dataset.csv}, contained 19,907 rows. In this final dataset, the \nolinkurl{is_high_congestion} target was imbalanced, with 14,636 records (73.5\%) labeled as normal conditions and 5,271 records (26.5\%) labeled as high congestion.
+
+\section{Forecasting Models}
+\label{sec:forecasting-models}
+
+Two related but distinct forecasting problems were addressed using the
+\path{ml_dataset.csv} feature set: a regression problem predicting
+\nolinkurl{future_passenger_pressure} as a continuous quantity
+(\path{notebooks/forecasting/05_predictive_modeling_and_forecasting.ipynb})
+and a binary classification problem predicting
+\nolinkurl{is_high_congestion}
+(\path{notebooks/forecasting/06_congestion_classification.ipynb}).
+
+In both cases, categorical variables were one-hot encoded, and the resulting
+feature matrix (384--385 columns) was split into training and test partitions
+using an 80/20 split with a fixed random seed
+(\texttt{random\_state = 42}) via scikit-learn's
+\texttt{train\_test\_split}. For the classification problem, the split was
+stratified on the target to preserve class balance; for the regression
+problem, it was not stratified, consistent with a continuous target.
+This produced training partitions of 15,925 records and held-out test
+partitions of 3,982 records in both cases.
+
+\subsection{Passenger-pressure regression}
+\label{subsec:passenger-pressure-regression}
+
+Four regression algorithms were trained to predict
+\nolinkurl{future_passenger_pressure}: a Random Forest Regressor
+\parencite{breiman2001random}
+(\texttt{n\_estimators = 100},
+\texttt{random\_state = 42},
+\texttt{n\_jobs = -1}),
+a Gradient Boosting Regressor
+\parencite{friedman2001greedy}
+(\texttt{n\_estimators = 200},
+\texttt{learning\_rate = 0.05},
+\texttt{max\_depth = 5},
+\texttt{random\_state = 42}),
+an XGBoost Regressor
+\parencite{chen2016xgboost}
+(\texttt{n\_estimators = 200},
+\texttt{learning\_rate = 0.05},
+\texttt{max\_depth = 6},
+\texttt{subsample = 0.8},
+\nolinkurl{colsample_bytree} \texttt{= 0.8},
+\texttt{random\_state = 42})
+and a LightGBM Regressor
+\parencite{ke2017lightgbm}
+(\texttt{n\_estimators = 200},
+\texttt{learning\_rate = 0.05},
+\texttt{max\_depth = 6},
+\texttt{random\_state = 42}).
+
+Each model was evaluated on the held-out test partition using mean absolute
+error (MAE), root mean squared error (RMSE), and the coefficient of
+determination ($R^2$). Results are reported in
+\Cref{tab:regression-performance}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Regression performance for future passenger-pressure forecasting on the held-out test set (n = 3,982)}
+    \label{tab:regression-performance}
+
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{6pt}
+
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}X
+        |>{\raggedleft\arraybackslash}p{2.2cm}
+        |>{\raggedleft\arraybackslash}p{2.2cm}
+        |>{\raggedleft\arraybackslash}p{2.2cm}|
+    }
+        \hline
+        \textbf{Model} &
+        \textbf{MAE} &
+        \textbf{RMSE} &
+        \textbf{$R^2$}
+        \\
+        \hline
+
+        Random Forest &
+        34.37 &
+        48.30 &
+        0.1803
+        \\
+        \hline
+
+        Gradient Boosting &
+        34.40 &
+        47.01 &
+        0.2234
+        \\
+        \hline
+
+        XGBoost &
+        34.07 &
+        46.72 &
+        0.233147
+        \\
+        \hline
+
+        LightGBM &
+        34.06 &
+        46.61 &
+        0.2366
+        \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+LightGBM produced the lowest MAE and RMSE and the highest $R^2$ among the
+four regressors, followed closely by XGBoost; both boosting models
+outperformed Random Forest by a wider margin on $R^2$ than on MAE.
+
+Feature-importance analysis of the Random Forest regressor, shown in
+Figure B.4 of Appendix B, identified \nolinkurl{week_of_year}
+(importance 0.118), \nolinkurl{rolling_bags_mean_3} (0.093),
+\nolinkurl{rolling_mean_3} (0.089), \nolinkurl{lag_3_passengers} (0.074),
+\nolinkurl{lag_1_passengers} (0.057), \nolinkurl{hour_sin} (0.054),
+\nolinkurl{month_cos} (0.040), \nolinkurl{arrival_hour} (0.039) and
+\nolinkurl{day_of_week} (0.037) as the most influential predictors,
+confirming that recent operational history and cyclical time-of-year
+information dominate over single-flight characteristics in explaining
+short-horizon passenger-pressure variation.
+
+The trained XGBoost regressor was retained as the saved production model
+for passenger-pressure forecasting
+(\path{models/xgboost_passenger_pressure.pkl}).
+
+Figure B.5 in Appendix B compares actual and XGBoost-predicted Passenger
+pressure over a window of the held-out test set, showing that the production
+regressor tracks the broad shape of demand fluctuation while under-predicting
+some peak values, consistent with the moderate $R^2$ (0.2331) reported in
+\Cref{tab:regression-performance}.
+
+Figure B.6 presents the corresponding residual distribution, which is
+approximately centered on zero with a moderate spread on both sides,
+indicating that prediction errors are not systematically biased in one
+direction but remain sizeable relative to the mean passenger-pressure level.
+
+\subsection{Congestion classification}
+\label{subsec:congestion-classification}
+
+For the congestion-classification problem, four ensemble classifiers were trained with the same 80/20 stratified split: a Random Forest Classifier (\texttt{n\_estimators = 200}, \texttt{max\_depth = 10}, \texttt{random\_state = 42}, \texttt{n\_jobs = -1}), a Gradient Boosting Classifier (\texttt{random\_state = 42}, default depth/learning-rate settings), an XGBoost Classifier (\texttt{n\_estimators = 200}, \texttt{learning\_rate = 0.05}, \texttt{max\_depth = 6}, \texttt{subsample = 0.8}, \nolinkurl{colsample_bytree}~\texttt{= 0.8}, \texttt{random\_state = 42}) and a LightGBM Classifier (\texttt{n\_estimators = 200}, \texttt{learning\_rate = 0.05}, \texttt{max\_depth = 6}, \texttt{random\_state = 42}). All four algorithms are the classification counterparts of the regressors cited in \Cref{subsec:passenger-pressure-regression} \parencite{breiman2001random,friedman2001greedy,chen2016xgboost,ke2017lightgbm}, and all were implemented through the scikit-learn interface \parencite{pedregosa2011scikitlearn}. Models were evaluated using accuracy, precision, recall, F1 score, and ROC-AUC, together with confusion matrices and ROC curves.
+
+Figure B.7 in Appendix B shows the resulting class distribution of the \nolinkurl{is_high_congestion} target in \path{ml_dataset.csv}, confirming the 73.5\% / 26.5\% imbalance between normal-condition and high-congestion records reported in \Cref{subsec:forecasting-targets} and motivating the use of stratified sampling in the train/test split.
+
+When trained on the full 385-feature set, which retained \nolinkurl{future_baggage_pressure} as a predictor, all four classifiers achieved near-perfect or perfect scores (\Cref{tab:full-feature-congestion-classifiers}). Because \nolinkurl{future_baggage_pressure} is itself derived from the same next-arrival event as the \nolinkurl{is_high_congestion} target, its inclusion was identified as a source of information leakage rather than genuine predictive skill: it allowed the models to infer the label almost directly rather than to learn operationally deployable relationships between arrival characteristics and future congestion.
+
+\begin{table}[htbp]
+  \centering
+  \renewcommand{\arraystretch}{1.25}
+  \caption{Full-feature congestion classifiers on the held-out test set (n = 3,982); \texttt{future\_baggage\_pressure} retained as a predictor.}
+  \label{tab:full-feature-congestion-classifiers}
+  \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|}
+    \hline
+    \textbf{Model} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{ROC-AUC} \\
+    \hline
+    Random Forest     & 0.9759 & 1.0000 & 0.9089 & 0.9523 & 1.0000 \\
+    \hline
+    Gradient Boosting & 1.0000 & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+    \hline
+    XGBoost           & 1.0000 & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+    \hline
+    LightGBM          & 1.0000 & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+Figure 4.1 shows the top 15 classification features for the full-feature Random Forest model; the dominance of \nolinkurl{future_baggage_pressure}, with an importance of approximately 0.60, roughly ten times that of the next-ranked predictor (\nolinkurl{arrival_hour}), directly identifies it as the source of the leakage described above. Figures B.8 and B.9 in Appendix B show the corresponding confusion matrix and ROC curve for the full-feature Random Forest classifier, which achieved near-total separation between classes (ROC-AUC = 1.0000) as a direct consequence of this leakage rather than as evidence of genuine forecasting skill.
+
+% ---------------------------------------------------------------------------
+% FIGURE 4.1 -- ASSET NOT YET SUPPLIED.
+% Graphic required from notebooks/forecasting/06_congestion_classification.ipynb
+% (top 15 classification features, full-feature Random Forest congestion classifier).
+% Uncomment and insert the correct filename once the image file is added to
+% figures/chapter4/. Caption text below is verbatim from the finalized Word source.
+%
+% \begin{figure}[htbp]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
+%   \caption{Top 15 classification features for the full-feature Random Forest
+%   congestion classifier. The dominance of \texttt{future\_baggage\_pressure}
+%   (importance $\approx$ 0.60) identifies it as the source of the information
+%   leakage discussed above
+%   (\texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}).}
+%   \label{fig:full-feature-rf-classification-importance}
+% \end{figure}
+% ---------------------------------------------------------------------------
+
+To obtain a realistic estimate of operational forecasting capability, \nolinkurl{future_baggage_pressure} was removed, and the four classifiers were retrained on the resulting 384-feature reduced set, with the same stratified 80/20 split (\Cref{tab:reduced-feature-congestion-classifiers}).
+
+\begin{table}[htbp]
+  \centering
+  \renewcommand{\arraystretch}{1.25}
+  \caption{Reduced-feature congestion classifiers on the held-out test set (n = 3,982); \texttt{future\_baggage\_pressure} excluded.}
+  \label{tab:reduced-feature-congestion-classifiers}
+  \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|}
+    \hline
+    \textbf{Model} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{ROC-AUC} \\
+    \hline
+    Random Forest     & 0.7657 & 0.7123 & 0.1926 & 0.3032 & 0.7677 \\
+    \hline
+    Gradient Boosting & 0.7705 & 0.6562 & 0.2789 & 0.3915 & 0.7711 \\
+    \hline
+    XGBoost           & 0.7803 & 0.6520 & 0.3643 & 0.4674 & 0.7973 \\
+    \hline
+    LightGBM          & 0.7805 & 0.6520 & 0.3662 & 0.4690 & 0.7914 \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+Under this more realistic configuration, Reduced XGBoost achieved the highest ROC-AUC (0.7973), and Reduced LightGBM achieved the highest accuracy, F1 score, and a closely comparable ROC-AUC (0.7914). In contrast, Reduced Random Forest showed markedly lower recall (0.1926) than the boosting-based models. Because early detection of high-congestion periods was treated as operationally more important than avoidance of false alarms, recall and F1 score were weighted alongside ROC-AUC in selecting the deployed classifier; the Reduced LightGBM model was saved as the production congestion classifier (\path{models/reduced_lightgbm_congestion_classifier.pkl}). Figure B.10 in Appendix B shows the top 15 features for the reduced-feature Random Forest classifier after \nolinkurl{future_baggage_pressure} was removed; cyclical time-of-day features (\nolinkurl{hour_cos}, \nolinkurl{arrival_hour}, \nolinkurl{hour_sin}) and rolling/Lag operational indicators dominate, consistent with the averaged feature-importance analysis across the four reduced classifiers, which identified \nolinkurl{rolling_bags_mean_3}, \nolinkurl{rolling_mean_3}, \nolinkurl{week_of_year}, \nolinkurl{arrival_hour}, \nolinkurl{lag_1_passengers} and \nolinkurl{lag_3_passengers} as the most consistently influential predictors, mirroring the pattern found in the regression models. Figure 4.2 compares accuracy, recall, F1 score, and ROC-AUC across the full-feature and all four reduced-feature classifiers, illustrating the substantial performance gap attributable to the \nolinkurl{future_baggage_pressure} leakage variable.
+
+% ---------------------------------------------------------------------------
+% FIGURE 4.2 -- ASSET NOT YET SUPPLIED.
+% Graphic required from notebooks/forecasting/06_congestion_classification.ipynb
+% (accuracy, recall, F1 and ROC-AUC: full-feature RF vs four reduced-feature classifiers).
+% Uncomment and insert the correct filename once the image file is added to
+% figures/chapter4/. Caption text below is verbatim from the finalized Word source.
+%
+% \begin{figure}[htbp]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
+%   \caption{Accuracy, recall, F1 score, and ROC-AUC for the full-feature Random
+%   Forest classifier compared with the four reduced-feature classifiers,
+%   corresponding to \Cref{tab:full-feature-congestion-classifiers} and
+%   \Cref{tab:reduced-feature-congestion-classifiers}
+%   (\texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}).}
+%   \label{fig:classifier-metric-comparison}
+% \end{figure}
+% ---------------------------------------------------------------------------
+
+A SHAP (SHapley Additive exPlanations) analysis \parencite{lundberg2017unified} was additionally performed on the reduced XGBoost classifier using \texttt{shap.TreeExplainer}, which computes exact Shapley values for tree ensembles. As shown in the SHAP summary plot in Figure B.13 of Appendix B, \nolinkurl{hour_cos} and \nolinkurl{arrival_hour} contributed most to the predicted congestion probability, with congestion probability rising markedly during peak arrival windows, particularly the evening period, and falling during midday and overnight periods. Rolling and lagged passenger/baggage variables contributed consistently across observations, corroborating the feature-importance ranking and indicating that the classifiers learned temporally coherent, operationally interpretable congestion dynamics rather than arbitrary statistical associations.
+
+\subsection{Time-based validation}
+\label{subsec:time-based-validation}
+
+Because a random train/test split can allow information from temporally adjacent records to leak between partitions, a chronological validation was additionally performed (\path{notebooks/forecasting/07_time_based_validation.ipynb}). A synthetic ordering date was constructed from \nolinkurl{week_of_year} and \nolinkurl{arrival_hour}; the dataset was sorted chronologically, and the first 80\% of records (15,925 rows) were used for training, and the final 20\% (3,982 rows) for testing, preserving temporal order rather than randomizing it. In addition to \nolinkurl{future_passenger_pressure} and \nolinkurl{future_baggage_pressure}, the direct demand variables used to construct the target (\nolinkurl{estimated_passengers}, \nolinkurl{estimated_bags}, \nolinkurl{estimated_baggage_weight_kg}) were also excluded from the feature set for this test, leaving 22 pre-encoding features (368 after one-hot encoding). A LightGBM classifier trained under this configuration (\texttt{n\_estimators = 200}, \texttt{learning\_rate = 0.05}, \texttt{max\_depth = 6}, \texttt{random\_state = 42}) returned an accuracy, precision, recall, F1 score, and ROC-AUC of 1.0000 on the chronological test partition.
+
+Subsequent diagnostic examination established that this result is an artifact of two compounding faults rather than evidence of forecasting capability, and it is therefore not reported as a performance estimate. The first fault is a mismatch in target definition between pipeline stages. The congestion-classification notebook of \Cref{subsec:congestion-classification} redefines \nolinkurl{is_high_congestion} on the one-step-ahead value (\nolinkurl{future_passenger_pressure}~$\geq$~180) in memory, but does not write the revised column back to \path{ml_dataset.csv}. The stored column, therefore, retains the earlier definition constructed in the feature-engineering notebook, in which the target is derived from the current record (\nolinkurl{estimated_passengers}~$\geq$~180.40). Verified against \path{ml_dataset.csv}, the stored target agrees with the current-record definition in 1.000000 of cases and with the one-step-ahead definition in 0.640428; the stored class balance is 14,270 normal to 5,637 high-congestion records, against the 14,636 to 5,271 reported in \Cref{subsec:congestion-classification}. Consequently, the chronological validation evaluated a different classification problem from the one reported in \Cref{subsec:congestion-classification}.
+
+The second fault is that the mismatched target is a deterministic function of a retained predictor. Because \nolinkurl{estimated_passengers} is computed as the mapped seat capacity multiplied by the constant load factor (\Cref{sec:data-sources}), a threshold applied to it partitions aircraft types rather than operating conditions: across the 73 aircraft types present in \path{ml_dataset.csv}, none carries more than one target value. The categorical variable \nolinkurl{type} was retained among the 22 pre-encoding features and one-hot encoded, allowing the classifier to reproduce the target via a type-to-label lookup. Reproducing the chronological split and mapping each test record to the modal training label of its aircraft type alone yields an accuracy of 1.0000 with complete coverage, without any model being fitted. The same procedure applied to \nolinkurl{operating_as} yields 0.9456, to \nolinkurl{orig_iata} yields 0.8863, and the two combined yield 0.9604, indicating that carrier and origin identifiers partially reconstruct the same information because carriers operate consistent equipment on consistent routes.
+
+The two faults are jointly necessary under the one-step-ahead definition used in \Cref{subsec:congestion-classification}; the current record's aircraft type, carrier, and origin do not determine the aircraft type for the following arrival, so no equivalent lookup exists, and performance falls within the range reported in \Cref{tab:reduced-feature-congestion-classifiers}. The chronological validation is accordingly treated as invalid as executed, and the random-split results of \Cref{subsec:congestion-classification} are retained as the valid estimates of classifier performance throughout this thesis. A corrected chronological validation would require the target to be re-derived from \nolinkurl{future_passenger_pressure} within the validation notebook itself. It would additionally need to partition on whole synthetic-timestamp groups: the synthetic ordering date resolves to 1,234 distinct values across 19,907 records. Hence, an index-based split divides records that share an identical timestamp between the training and test partitions.
+
+\section{Simulation Framework (AnyLogic)}
+\label{sec:simulation-framework}
+
+The operational consequences of predicted and observed arrival pressure were evaluated using a discrete-event simulation of the AIBD arrival process, built in AnyLogic (project file \path{models/AIBD_ArrivalFlow_v1/AIBD_ArrivalFlow_v1.alp}). The model represents the sequential arrival journey (passenger generation, immigration processing, baggage reclaim, customs inspection, and passenger exit) as a chain of queuing service blocks, with queue accumulation and congestion propagation emerging from the interaction between generated demand and configured processing capacity at each stage, consistent with the conceptual architecture set out in \Cref{chap:preliminaries}.
+
+\subsection{Simulation inputs}
+\label{subsec:simulation-inputs}
+
+The simulation was driven by six structured input tables prepared in \path{notebooks/simulation/08_prepare_anylogic_simulation_datasets.ipynb} from the final \path{ml_dataset.csv} (\path{data/processed/anylogic/}): \path{anylogic_passenger_arrivals.csv} (19,907 rows: time-indexed arrival demand with operational-period, peak-hour and night-operation flags), \path{anylogic_baggage_pressure.csv} (19,907 rows: estimated bags, baggage weight and rolling baggage-pressure indicators), \path{anylogic_congestion_states.csv} (19,907 rows: a binary \nolinkurl{is_high_congestion} flag together with a derived \nolinkurl{congestion_risk_level} of ``High'' or ``Normal'', used to validate simulated congestion against the machine-learning classification of \Cref{sec:forecasting-models}), \path{anylogic_operational_periods.csv} (a four-row lookup table defining Morning Peak, Midday Normal, Evening Peak and Night Operations bands with an associated base processing rate, staffing level and congestion-risk weight, shown in \Cref{tab:anylogic-operational-periods}), \path{anylogic_scenario_parameters.csv} (a five-row scenario-configuration table, \Cref{tab:anylogic-scenario-parameters}) and \path{anylogic_kpi_definitions.csv} (an eight-row KPI reference table, presented in Section 4.5). Figure A.1 in Appendix A shows the annotated reference floor plan of the AIBD arrival terminal (the immigration hall, baggage-reclaim carousels, and customs area) that was used to ground the spatial and process logic of the AnyLogic model described below.
+
+\begin{table}[H]
+    \centering
+    \caption{Operational-period lookup table used to drive time-varying processing rate and congestion-risk weighting in the AnyLogic model (\texttt{data/\allowbreak processed/\allowbreak anylogic/\allowbreak anylogic\_operational\_periods.csv}).}
+    \label{tab:anylogic-operational-periods}
+
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{5pt}
+
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{2.2cm}
+        |>{\centering\arraybackslash}p{2.5cm}
+        |>{\centering\arraybackslash}p{2.2cm}
+        |>{\centering\arraybackslash}p{2.7cm}|
+    }
+        \hline
+        \textbf{Operational period} &
+        \textbf{Hours} &
+        \textbf{Base processing rate} &
+        \textbf{Staffing level} &
+        \textbf{Congestion-risk weight}
+        \\
+        \hline
+
+        Morning Peak &
+        05:00--09:00 &
+        1.00 &
+        High &
+        1.25
+        \\
+        \hline
+
+        Midday Normal &
+        10:00--16:00 &
+        1.00 &
+        Normal &
+        0.75
+        \\
+        \hline
+
+        Evening Peak &
+        17:00--21:00 &
+        1.00 &
+        High &
+        1.30
+        \\
+        \hline
+
+        Night Operations &
+        22:00--04:00 &
+        0.85 &
+        Reduced &
+        0.60
+        \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+The scenario-parameter table defines five configurable multiplier profiles applied to immigration staffing, baggage capacity, and customs processing, together with a queue-length threshold and an intervention flag (\Cref{tab:anylogic-scenario-parameters}). This configuration table was subsequently operationalized as six named AnyLogic scenarios, described in Section 4.4.2, each implemented as a separate model file or model configuration and each mapped conceptually onto one or more of the five parameter profiles.
+
+\begin{table}[H]
+    \centering
+    \caption{AnyLogic scenario-parameter configuration table
+    (\texttt{data/\allowbreak processed/\allowbreak anylogic/\allowbreak
+    anylogic\_scenario\_parameters.csv}).}
+    \label{tab:anylogic-scenario-parameters}
+
+    \footnotesize
+    \renewcommand{\arraystretch}{1.35}
+    \setlength{\tabcolsep}{2pt}
+
+    \begin{tabular}{
+        |>{\centering\arraybackslash}p{0.55cm}
+        |>{\raggedright\arraybackslash}p{4.30cm}
+        |>{\centering\arraybackslash}p{2.35cm}
+        |>{\centering\arraybackslash}p{1.55cm}
+        |>{\centering\arraybackslash}p{1.55cm}
+        |>{\centering\arraybackslash}p{1.70cm}
+        |>{\centering\arraybackslash}p{2.25cm}|
+    }
+        \hline
+        \textbf{ID} &
+        \textbf{Scenario name} &
+        \shortstack{\textbf{Immigration}\\\textbf{mult.}} &
+        \shortstack{\textbf{Baggage}\\\textbf{mult.}} &
+        \shortstack{\textbf{Customs}\\\textbf{mult.}} &
+        \shortstack{\textbf{Queue}\\\textbf{threshold}} &
+        \textbf{Intervention}
+        \\
+        \hline
+
+        1 &
+        Baseline &
+        1.00 &
+        1.00 &
+        1.00 &
+        100 &
+        No
+        \\
+        \hline
+
+        2 &
+        Immigration Capacity +20\% &
+        1.20 &
+        1.00 &
+        1.00 &
+        100 &
+        No
+        \\
+        \hline
+
+        3 &
+        Baggage Capacity +20\% &
+        1.00 &
+        1.20 &
+        1.00 &
+        100 &
+        No
+        \\
+        \hline
+
+        4 &
+        Combined Capacity +20\% &
+        1.20 &
+        1.20 &
+        1.15 &
+        100 &
+        No
+        \\
+        \hline
+
+        5 &
+        Peak Intervention &
+        1.25 &
+        1.25 &
+        1.20 &
+        80 &
+        Yes
+        \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Before the full scenario battery was run, the baseline configuration was calibrated and validated against a short reference simulation run, recorded in \path{AIBD_ArrivalFlow_v1_Baseline_Calibrated.docx}: 240 passengers generated, 174 exited, an average system time of 41 minutes, an immigration queue of 9, a baggage queue of 40, a customs queue of 0, an arrival rate of 2.46 passengers per minute, an overall congestion level of ``LOW'', and calibrated multipliers of 0.60 for immigration staffing and 1.00 for baggage and customs processing. This calibration run is a smaller, separately timed validation of the baseline configuration. It is distinct from the larger six-scenario comparison reported in Section 4.4.2 and used throughout the Decision Support System.
+
+\subsection{Simulated process architecture and scenario design}
+\label{subsec:simulation-architecture-scenarios}
+
+Within the model, passengers are generated according to the time-indexed arrival-demand table and enter a five-zone process chain: an arrival-entry zone (passenger source), an immigration-control zone (multiple service counters with queue accumulation), a baggage-reclaim zone (carousel-based service representing baggage-processing and delivery pressure), a customs-inspection zone (lane-based inspection service), and an exit zone recording completed passengers (\path{AnyLogic Visual Simulation Layer.docx}). Each zone accumulates a queue when incoming demand exceeds its configured processing rate, and the multipliers in \Cref{tab:anylogic-scenario-parameters} scale the effective processing capacity of the immigration, baggage, and customs zones relative to the operational-period base rates in \Cref{tab:anylogic-operational-periods}. A color-coded congestion indicator (green/orange/red/dark red for Low/Moderate/High/Critical) mirrors the passenger-pressure classification of \Cref{subsec:pressure-classification} within the simulated environment. Figure A.4 in Appendix A shows the live AnyLogic control interface implementing this architecture, linking the data layer, scenario configuration, simulation engine, KPI monitoring, and DSS logic within a single operational-intelligence view.
+
+Figure A.2 in Appendix A presents the corresponding process layout as implemented in the AnyLogic model editor, showing the dual immigration-counter blocks, the four baggage-reclaim carousels, the customs decision branch, and the exit corridor. Figure A.3 shows the resulting three-dimensional visualization generated by the model during a simulation run, with passenger agents moving through the immigration and baggage-reclaim areas, and Figure 4.3 summarises this same five-zone process chain as a simplified block-level architecture diagram, distinguishing source/exit, queue, processing, and decision blocks.
+
+% ---------------------------------------------------------------------------
+% FIGURE 4.3 -- ASSET NOT YET SUPPLIED.
+% Graphic required from notebooks/analytics/09_thesis_visualizations.ipynb
+% (block-level architecture of the passenger arrival flow).
+% Uncomment and insert the correct filename once the image file is added to
+% figures/chapter4/. Caption below is verbatim from the finalized Word source.
+% When activated, change the in-text "Figure 4.3" above to
+% \Cref{fig:anylogic-passenger-flow-architecture}.
+%
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
+%   \caption{Block-level architecture of the passenger arrival flow implemented
+%   in the AnyLogic model: source, queue, processing, and decision blocks across
+%   the five process stages
+%   (\texttt{notebooks/analytics/09\_thesis\_visualizations.ipynb}).}
+%   \label{fig:anylogic-passenger-flow-architecture}
+% \end{figure}
+% ---------------------------------------------------------------------------
+
+Six named scenarios were executed and compared, consistent with the project's experiment log and the scenario-comparison page of the Power BI dashboard (Section 4.6): Scenario 00 (Baseline), representing current estimated operating conditions with default staffing and standard baggage processing; Scenario A (Immigration Optimization), representing increased immigration-processing capacity; Scenario B (Baggage Optimization), representing increased baggage-reclaim capacity; Scenario C (Peak Stress Test), representing overlapping international arrival waves (modelled on concurrent Dubai, Istanbul and Paris arrivals) with increased arrival rate, baggage demand and customs-inspection probability; Scenario D (Dynamic Intervention), implementing an adaptive rule that increases baggage-processing capacity in response to observed queue conditions during the simulation (in the form \texttt{if baggageQueue.size() $>$ 50: baggageCapacityMultiplier = 1.5}); and Scenario E (Integrated Optimization), combining immigration optimisation, baggage optimisation and the adaptive intervention logic within a single configuration. Figure 4.4 illustrates the decision logic of the Scenario D dynamic-intervention mechanism: real-time queue monitoring and threshold evaluation determine whether to activate additional operational capacity or maintain baseline resources. Model files for the Baseline and Scenarios A-D are maintained as separate AnyLogic projects (\path{models/AIBD_ArrivalFlow_v1/AIBD_ArrivalFlow_v1_BASELINE}, \nolinkurl{_Scenario_A}, \nolinkurl{_Scenario_B}, \nolinkurl{_Scenario_C}, \nolinkurl{_Scenario_D}); Scenario E is reported as an additional configuration within the same modeling framework.
+
+% ---------------------------------------------------------------------------
+% FIGURE 4.4 -- ASSET NOT YET SUPPLIED.
+% Graphic required from notebooks/analytics/09_thesis_visualizations.ipynb
+% (decision logic of the Scenario D dynamic-intervention mechanism).
+% Uncomment and insert the correct filename once the image file is added to
+% figures/chapter4/. Caption below is verbatim from the finalized Word source.
+% When activated, change the in-text "Figure 4.4" above to
+% \Cref{fig:dynamic-intervention-logic}.
+%
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
+%   \caption{Decision logic of the dynamic-intervention mechanism implemented in
+%   Scenario D: real-time queue monitoring, threshold evaluation, and conditional
+%   activation of additional operational capacity
+%   (\texttt{notebooks/analytics/09\_thesis\_visualizations.ipynb}).}
+%   \label{fig:dynamic-intervention-logic}
+% \end{figure}
+% ---------------------------------------------------------------------------
+
+Each scenario was evaluated using the common set of KPIs described in Section 4.5, exported to \path{scenario_kpi_results.csv}, and used consistently in the machine-learning-derived congestion classification, the AnyLogic simulation outputs, and the Power BI dashboard, so that predicted pressure, simulated operational consequences, and dashboard-based decision support all refer to the same underlying operational definitions.
+
+\section{KPIs and Operational Metrics}
+\label{sec:kpis-operational-metrics}
+
+Two related sets of key performance indicators are used in the framework: a general KPI reference table defined for the AnyLogic simulation, and the specific scenario-level metrics computed for scenario comparison and reported in the Decision Support System.
+
+The AnyLogic KPI reference table (\path{anylogic_kpi_definitions.csv}, \Cref{tab:anylogic-kpi-definitions}) defines eight indicators used to characterise simulated operational behaviour: average wait time (minutes), maximum queue length (passengers), average queue length (passengers), passenger throughput (passengers processed), baggage delay (minutes), congestion duration (simulation time spent under high-congestion conditions), the count of triggered operational interventions, and service level (the percentage of passengers processed within a target time).
+
+\begin{table}[H]
+  \centering
+  \renewcommand{\arraystretch}{1.25}
+  \caption{AnyLogic KPI definition table (\texttt{data/\allowbreak processed/\allowbreak anylogic/\allowbreak anylogic\_kpi\_definitions.csv}).}
+  \label{tab:anylogic-kpi-definitions}
+  \begin{tabularx}{\textwidth}{|l|X|l|}
+    \hline
+    \textbf{KPI} & \textbf{Description} & \textbf{Unit} \\
+    \hline
+    \nolinkurl{average_wait_time} & Mean passenger waiting time across processing points & minutes \\
+    \hline
+    \nolinkurl{max_queue_length} & Maximum observed queue length during simulation & passengers \\
+    \hline
+    \nolinkurl{average_queue_length} & Average queue length across simulation period & passengers \\
+    \hline
+    \nolinkurl{throughput_passengers} & Total number of passengers processed & passengers \\
+    \hline
+    \nolinkurl{baggage_delay} & Average baggage processing delay & minutes \\
+    \hline
+    \nolinkurl{congestion_duration} & Total time spent under high congestion conditions & \nolinkurl{simulation_time} \\
+    \hline
+    \nolinkurl{intervention_count} & Number of operational interventions triggered & count \\
+    \hline
+    \nolinkurl{service_level} & Percentage of passengers processed within target time & percentage \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+For the scenario-comparison and decision-support layer, each of the six simulated scenarios (\Cref{subsec:simulation-architecture-scenarios}) was summarised in \path{scenario_kpi_results.csv} using a consistent set of computed fields: \nolinkurl{Generated_Passengers} and \nolinkurl{Exited_Passengers} (the number of passengers entering and completing the modelled system); \nolinkurl{Average_System_Time} (mean end-to-end passenger time in the system, in minutes); \nolinkurl{Immigration_Queue}, \nolinkurl{Baggage_Queue} and \nolinkurl{Customs_Queue} (process-specific queue sizes); \nolinkurl{Total_Queue}, computed as the sum of the three process-specific queues; \nolinkurl{Throughput_Efficiency}, computed as the ratio of exited to generated passengers; \nolinkurl{Passenger_Loss} and \nolinkurl{Passenger_Loss_Rate} (the absolute and proportional shortfall between generated and exited passengers); and four normalised 0--1 performance scores (\nolinkurl{Throughput_Score}, \nolinkurl{Queue_Score}, \nolinkurl{System_Time_Score} and \nolinkurl{Resilience_Score}) together with a categorical \nolinkurl{Risk_Level} (Moderate, High or Critical) and a free-text \nolinkurl{Operational_Recommendation}. The \nolinkurl{Total_Queue} and \nolinkurl{Throughput_Efficiency} fields are reproduced identically as Power BI DAX measures (Total Queue = \texttt{SUM}(\nolinkurl{Immigration_Queue}) + \texttt{SUM}(\nolinkurl{Baggage_Queue}) + \texttt{SUM}(\nolinkurl{Customs_Queue}); Throughput Efficiency = \texttt{DIVIDE}(\nolinkurl{Exited_Passengers}, \nolinkurl{Generated_Passengers})), so that the KPI values displayed in the dashboard are calculated consistently with the values in the underlying scenario-results table. Figure A.5 in Appendix A compares \nolinkurl{Average_System_Time} across the six scenarios directly: Scenario E (Integrated Optimization, 78 minutes) and Scenario B (Baggage Optimization, 83 minutes) achieve the lowest system times, while Scenario C (Peak Stress Test) and Scenario D (Dynamic Intervention) record the highest, at 187 minutes each. The corresponding comparison of \nolinkurl{Immigration_Queue} and \nolinkurl{Baggage_Queue} by scenario is presented and analysed in Chapter 5 (Figure 5.3), where it establishes the congestion-propagation pattern anticipated in \Cref{subsec:simulation-architecture-scenarios}: the substantial reduction in the immigration queue under Scenario A (5 passengers, against a baseline of 80) is accompanied by an increase in the baggage queue (198 passengers, against a baseline of 120), showing that relieving pressure at one process stage can shift it to another rather than removing it from the system.
+
+The composite \nolinkurl{Throughput_Score}, \nolinkurl{Queue_Score}, \nolinkurl{System_Time_Score} and \nolinkurl{Resilience_Score} fields are computed in \path{notebooks/analytics/09_thesis_visualizations.ipynb} by max-normalising four primary metrics across the six scenarios: \nolinkurl{Throughput_Score} is \nolinkurl{Throughput_Efficiency} divided by its maximum value; \nolinkurl{Queue_Score} is one minus the ratio of \nolinkurl{Total_Queue} to its maximum value; \nolinkurl{System_Time_Score} is one minus the ratio of \nolinkurl{Average_System_Time} to its maximum value; and \nolinkurl{Resilience_Score} is the unweighted mean of these three component scores. Figure A.7 in Appendix A presents the resulting scores as a colour-coded performance heatmap across the six scenarios: Scenario B attains the highest \nolinkurl{Resilience_Score} (0.76), narrowly ahead of Scenario E (0.75), followed by Scenario 00 and Scenario A (0.65 each), while Scenario C and Scenario D, the two configurations with the largest queues and longest system times, share the lowest \nolinkurl{Resilience_Score} (0.20).
+
+No single KPI was sufficient to characterize scenario performance: the measures listed above address passenger experience, the location and size of unmet demand, whether generated demand is successfully processed, and how well a configuration absorbs and recovers from pressure. Figure A.11 in Appendix A presents the conceptual structure underlying this resilience framework, in which passenger demand and operational capacity jointly determine queue formation and congestion level while dynamic intervention and strategic capacity planning feed back into system resilience. This multi-indicator structure is carried through unchanged into the scenario-comparison, dynamic-intervention-monitoring, and executive decision-support pages of the Power BI system described in Section 4.6.
+
+\section{Decision Support System (Power BI)}
+\label{sec:decision-support-system}
+
+The final methodological component is a Power BI Decision Support System (\path{dashboards/powerbi/aibd_arrival_operations_dss.pbix}) that integrates the Passenger- and baggage-pressure indicators, the congestion classifications, the AnyLogic scenario-KPI results, and the associated operational recommendations into a five-page, manager-facing reporting environment. The five pages, confirmed against the exported dashboard screenshots, correspond directly to the operational-intelligence structure established in \Cref{chap:introduction} and \Cref{chap:preliminaries}: Operational Overview, Scenario Comparison, Dynamic Intervention Monitoring, Executive Decision Support Center, and Operational Intelligence Insights.
+
+\subsection{Operational Overview}
+\label{subsec:powerbi-operational-overview}
+
+The Operational Overview page, shown in Figure 4.5, presents four headline KPI cards (Generated Passengers, Exited Passengers, Average System Time and Resilience Score), an Hourly Passenger Pressure Forecast line chart with the 160-passenger operational threshold (\Cref{subsec:pressure-classification}) displayed as a reference line, an Hourly Baggage Processing Demand column chart, an Operational Congestion Distribution donut chart summarising the proportion of Low/Moderate/High pressure periods, and a text-based Operational Alerts panel that surfaces conditions such as the timing of peak congestion windows and the resilience level of the currently selected scenario.
+
+% ---------------------------------------------------------------------------
+% FIGURE 4.5 -- ASSET NOT YET SUPPLIED.
+% Required screenshot from dashboards/powerbi/aibd_arrival_operations_dss.pbix
+% (Operational Overview page). Suggested destination: figures/chapter4/
+% Uncomment after the exact screenshot asset is added.
+% When activated, change the in-text "Figure 4.5" above to
+% \Cref{fig:powerbi-operational-overview}.
+%
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
+%   \caption{Power BI Decision Support System: Operational Overview page, Passenger
+%   showing headline KPI cards, the hourly passenger-pressure forecast with the
+%   160-passenger threshold reference line, hourly baggage demand, and the
+%   operational-alerts panel
+%   (\texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}).}
+%   \label{fig:powerbi-operational-overview}
+% \end{figure}
+% ---------------------------------------------------------------------------
+
+\subsection{Scenario Comparison}
+\label{subsec:powerbi-scenario-comparison}
+
+The Scenario Comparison page, titled ``AIBD Operational Intelligence Platform: Simulation Scenario Comparison Dashboard'' and shown in Figure 4.6, presents KPI cards for best throughput, lowest queue and resilience score, a Passenger Throughput by Operational Scenario bar chart, a Queue Length by Operational Scenario bar chart, and an Operational Scenario Ranking and Recommendation Matrix table that ranks the six scenarios of \Cref{subsec:simulation-architecture-scenarios} by throughput, queue size, system time and resilience score, and assigns each a qualitative risk level (Moderate, High or Critical) and recommendation status (Recommended, Acceptable or Not Recommended). The underlying data source for this page is \path{scenario_kpi_results.csv}.
+
+% ---------------------------------------------------------------------------
+% FIGURE 4.6 -- ASSET NOT YET SUPPLIED.
+% Required screenshot from dashboards/powerbi/aibd_arrival_operations_dss.pbix
+% (Scenario Comparison page). Suggested destination: figures/chapter4/
+% Uncomment after the exact screenshot asset is added.
+% When activated, change the in-text "Figure 4.6" above to
+% \Cref{fig:powerbi-scenario-comparison}.
+%
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
+%   \caption{Power BI Decision Support System: Scenario Comparison page.
+%   Displays KPI cards for best throughput, lowest queue and resilience score;
+%   passenger throughput and queue length by operational scenario; and the
+%   Operational Scenario Ranking and Recommendation Matrix, which assigns each
+%   scenario a qualitative risk level (Moderate, High or Critical) and a
+%   recommendation status (Recommended, Acceptable or Not Recommended).
+%   Underlying data source: \texttt{scenario\_kpi\_results.csv} (Table C.12);
+%   \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}.}
+%   \label{fig:powerbi-scenario-comparison}
+% \end{figure}
+% ---------------------------------------------------------------------------
+
+\subsection{Dynamic Intervention Monitoring}
+\label{subsec:powerbi-dynamic-intervention}
+
+The Dynamic Intervention Monitoring page, shown in Figure 4.7, presents the core real-time-style decision-support functionality of the system, built primarily around Scenario D. It displays KPI cards for overall risk status, passenger peak, baggage peak and capacity-response status; repeats the Hourly Passenger Pressure Forecast and a Real-Time Baggage Processing Monitoring chart; and presents an Operational Alert Summary panel together with an extended version of the scenario ranking and recommendation matrix that includes delay (minutes), queue size and resilience percentage by scenario. This page operationalizes the dynamic-intervention logic described in \Cref{subsec:simulation-architecture-scenarios} (Figure 5.3) by connecting predicted and simulated pressure directly to threshold-based operational alerts.
+
+% ---------------------------------------------------------------------------
+% FIGURE 4.7 -- ASSET NOT YET SUPPLIED.
+% Required screenshot from dashboards/powerbi/aibd_arrival_operations_dss.pbix
+% (Dynamic Intervention Monitoring page). Suggested destination: figures/chapter4/
+% Uncomment after the exact screenshot asset is added.
+% When activated, change the in-text "Figure 4.7" above to
+% \Cref{fig:powerbi-dynamic-intervention}.
+%
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
+%   \caption{Power BI Decision Support System: Dynamic Intervention Monitoring
+%   page. Displays KPI cards for overall risk status, passenger peak, baggage
+%   peak and capacity-response status; the hourly passenger-pressure forecast
+%   and real-time baggage-processing monitoring charts; an operational alert
+%   summary; and an extended scenario ranking matrix reporting delay in minutes,
+%   queue size and resilience percentage by scenario. This page operationalizes
+%   the Scenario D intervention logic of Code D.7;
+%   \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}.}
+%   \label{fig:powerbi-dynamic-intervention}
+% \end{figure}
+% ---------------------------------------------------------------------------
+
+\subsection{Executive Decision Support Center}
+\label{subsec:powerbi-executive-dss}
+
+The Executive Decision Support Center, shown in Figure 4.8, consolidates the scenario-comparison evidence into a management-oriented summary: KPI cards identifying the best-performing scenario, its resilience score, the lowest queue value and the current executive risk level; a Recommended Operational Strategy text panel; a Scenario Ranking table (rank, scenario, resilience percentage, recommendation); an Operational Risk Distribution donut chart categorising scenarios as Critical, High or Moderate risk; and an Airport DSS Conclusions panel listing key findings, for example, the concentration of peak passenger congestion between 05:00--06:00 and 20:00--21:00, and the recommendation to apply proactive staffing and baggage-resource allocation during those windows.
+
+% ---------------------------------------------------------------------------
+% FIGURE 4.8 -- ASSET NOT YET SUPPLIED.
+% Required screenshot from dashboards/powerbi/aibd_arrival_operations_dss.pbix
+% (Executive Decision Support Center page). Suggested destination: figures/chapter4/
+% Uncomment after the exact screenshot asset is added.
+% When activated, change the in-text "Figure 4.8" above to
+% \Cref{fig:powerbi-executive-dss}.
+%
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
+%   \caption{Power BI Decision Support System: Executive Decision Support
+%   Center. Displays KPI cards identifying the best-performing scenario, its
+%   resilience score, the lowest queue value and the current executive risk
+%   level; a recommended operational strategy panel; a scenario ranking table;
+%   an operational risk-distribution chart; and an Airport DSS Conclusions panel
+%   reporting the concentration of peak passenger congestion between 05:00 and
+%   06:00 and between 20:00 and 21:00;
+%   \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}.}
+%   \label{fig:powerbi-executive-dss}
+% \end{figure}
+% ---------------------------------------------------------------------------
+
+\subsection{Operational Intelligence Insights}
+\label{subsec:powerbi-operational-intelligence}
+
+The Operational Intelligence Insights page, shown in Figure 4.9, uses Power BI's native Key Influencers visual to identify which operational conditions most increase the likelihood that congestion risk is ``High''. The analysis identifies Passengers Pressure Level being High as the strongest single influencer (a $3.17\times$ increase in the likelihood of high congestion risk), followed by the arrival hour falling between 19:00 and 21:00 ($3.02\times$), Baggage Pressure Level being High ($2.23\times$), the arrival hour being 06:00 or earlier ($1.48\times$), the arrival month falling between May and September ($1.35\times$. The arrival day being Thursday ($1.23\times$). These influence scores, together with an accompanying Top Segments view, a Key Findings panel, and an Operational Recommendations panel (for example, increasing staffing during the 19:00--21:00 peak and activating baggage balancing when baggage pressure is High), provide the explanatory layer of the Decision Support System, connecting the statistical predictors identified in \Cref{sec:forecasting-models} to concrete, manager-facing operational guidance.
+
+% ---------------------------------------------------------------------------
+% FIGURE 4.9 -- ASSET NOT YET SUPPLIED.
+% Required screenshot from dashboards/powerbi/aibd_arrival_operations_dss.pbix
+% (Operational Intelligence Insights page). Suggested destination: figures/chapter4/
+% Uncomment after the exact screenshot asset is added.
+% When activated, change the in-text "Figure 4.9" above to
+% \Cref{fig:powerbi-operational-intelligence}.
+%
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
+%   \caption{Power BI Decision Support System: Operational Intelligence Insights
+%   page. Displays the Key Influencers analysis of high congestion risk
+%   reproduced in Table C.15, together with a top-segments view, a key-findings
+%   panel and an operational-recommendations panel. This page provides the
+%   explanatory layer of the Decision Support System;
+%   \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}.}
+%   \label{fig:powerbi-operational-intelligence}
+% \end{figure}
+% ---------------------------------------------------------------------------
+
+\subsection{Data integration and consistency}
+\label{subsec:powerbi-data-integration}
+
+The dashboard's calculated columns reproduce the Passenger- and baggage-pressure classification rules of \Cref{subsec:pressure-classification} directly in DAX, a nested-\texttt{IF} Pressure Level column (Critical $\geq$ 230, High $\geq$ 190, Moderate $\geq$ 160, Low otherwise) and a percentile-based Baggage Pressure Level column using \texttt{PERCENTILEX.INC} at the 0.33 and 0.66 quantiles, together with supporting measures for total and average passengers and bags, flight counts by day/week/month/year, and a calendar-based Season classification. A separate, earlier-stage four-page exploratory report (specified in \path{reports/presentation/MASTER POWER BI COPILOT PROMPT.docx}: an Arrival Passenger Pressure dashboard, a Baggage Pressure and Ground Operations dashboard, a Congestion, Delay and Risk dashboard, and a global flight-flow map) was built directly on the 22,270-record master dataset and informed the design and DAX logic of the five-page operational Decision Support System described above. Maintaining the same pressure definitions, KPI formulas, and scenario labels across the Python analytics, the AnyLogic simulation, and the Power BI layer ensured that a manager viewing any page of the dashboard is working from the same operational definitions of passenger pressure, baggage pressure, congestion risk, and scenario performance used throughout the rest of the methodology.
+
+Taken together, the six components described in this chapter form a continuous operational-intelligence pipeline: the validated 22,270-record master dataset (\Cref{sec:data-sources}) is transformed into temporal, operational and pressure-classified features (\Cref{sec:feature-engineering}); machine-learning models forecast short-horizon passenger pressure and congestion risk from those features (\Cref{sec:forecasting-models}); the AnyLogic simulation translates predicted and scenario-specific demand into process-level queue, system-time, throughput and resilience outcomes (\Cref{sec:simulation-framework}); a consistent set of KPIs quantifies those outcomes across six comparable scenarios (\Cref{sec:kpis-operational-metrics}); and the Power BI Decision Support System presents the combined analytical, simulation and explanatory evidence in a form intended for use by airport managers, immigration officers, airline and baggage-handling teams, and executive decision-makers (\Cref{sec:decision-support-system}). This integrated methodology provides the basis for Chapter 5, where the analytical patterns, forecasting performance, simulation results, DSS outputs, operational interpretation, and limitations of the study are presented and discussed.

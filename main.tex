@@ -29,7 +29,12 @@
 \usepackage{setspace}
 \onehalfspacing
 
+% Improves character spacing and justification.
 \usepackage{microtype}
+\usepackage{float}
+% Gives LaTeX a little additional flexibility when resolving
+% difficult line breaks without changing the thesis margins.
+\setlength{\emergencystretch}{2em}
 
 % ============================================================
 % FIGURES
@@ -52,6 +57,7 @@
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
+\usepackage{tabularx}
 \usepackage{multirow}
 
 % ============================================================
@@ -108,8 +114,12 @@
 \addbibresource{references/references.bib}
 
 % ============================================================
-% LINKS AND CROSS-REFERENCES
+% URLS, LINKS AND CROSS-REFERENCES
 % ============================================================
+
+% Allows long URLs, filenames, and technical paths to break
+% naturally across lines.
+\usepackage{xurl}
 
 \usepackage[hidelinks]{hyperref}
 
@@ -118,7 +128,7 @@
     noabbrev
 ]{cleveref}
 
-% Names used by cleveref for code listings
+% Names used by cleveref for code listings.
 \crefname{lstlisting}{Code}{Codes}
 \Crefname{lstlisting}{Code}{Codes}
 
