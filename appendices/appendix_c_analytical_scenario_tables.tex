@@ -1,2 +1,604 @@
 \chapter{Analytical and Scenario Tables}
-\label{app:analytical-tables}
+\label{app:analytical-scenario-tables}
+
+Appendix C reproduces the complete analytical, forecasting, and Scenario tables underlying the results reported in Chapters 4 and 5. Tables C.1 to C.3 document the data pipeline and indicator definitions; Tables C.4 and C.5 give the complete 24-hour pressure profiles summarised in Chapter 5; Tables C.6 to C.8 give the full model-evaluation results; Tables C.9 to C.14 document the simulation configuration, outputs, and derived scores; Table C.15 reproduces the Power BI Key Influencers output.
+
+\begin{table}[H]
+    \centering
+    \caption{Record counts through the data validation and passenger-filtering pipeline. Source: \texttt{notebooks/preprocessing/02\_data\_validation.ipynb}. Reproduced from Chapter 4, Table 4.1.}
+    \label{tab:appendix-c-validation-pipeline}
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{
+        |>{\centering\arraybackslash}p{1.15cm}
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{2.55cm}|
+    }
+        \hline
+        \textbf{Step} & \centering\arraybackslash\textbf{Operation} & \textbf{Records remaining} \\
+        \hline
+        1 & Raw historical archive (2024-2026 FR24 collection, merged and de-duplicated) & 50,385 \\
+        \hline
+        2 & Filter to arrivals only (\nolinkurl{dest_icao} == ``GOBD'') & 25,164 \\
+        \hline
+        3 & Remove records with missing \nolinkurl{datetime_landed} & 24,340 \\
+        \hline
+        4 & Remove records with invalid or uncoercible datetime values & 24,340 \\
+        \hline
+        5 & Remove non-passenger flights (cargo, freighter, private, military) & 22,270 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Assumed seat capacity by aircraft type used for passenger estimation. Source: \texttt{notebooks/preprocessing/02\_data\_validation.ipynb}. Reproduced from Chapter 4, Table 4.2.}
+    \label{tab:appendix-c-seat-capacity}
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{
+        |>{\centering\arraybackslash}X
+        |>{\centering\arraybackslash}p{1.65cm}
+        |>{\centering\arraybackslash}X
+        |>{\centering\arraybackslash}p{1.65cm}|
+    }
+        \hline
+        \textbf{Aircraft type} & \textbf{Seats} &
+        \textbf{Aircraft type} & \textbf{Seats} \\
+        \hline
+        A319 & 140 & A333 & 290 \\
+        \hline
+        A320 & 180 & A332 & 260 \\
+        \hline
+        A321 & 220 & B763 & 260 \\
+        \hline
+        B737 & 160 & B77W & 396 \\
+        \hline
+        B738 & 189 & B788 & 242 \\
+        \hline
+        B38M & 189 & Other (default) & 150 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Passenger- and baggage-pressure classification rules applied to hourly aggregated demand. Source: \texttt{notebooks/analytics/03\_passenger\_pressure\_analysis.ipynb}. Reproduced from Chapter 4, Table 4.3. Implementation given in Code D.3 and Code D.4.}
+    \label{tab:appendix-c-pressure-rules}
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}p{2.5cm}
+        |>{\centering\arraybackslash}p{2.0cm}
+        |>{\raggedright\arraybackslash}X|
+    }
+        \hline
+        \centering\arraybackslash\textbf{Pressure type} &
+        \textbf{Band} &
+        \centering\arraybackslash\textbf{Rule} \\
+        \hline
+        Passenger & Critical & $\geq 230$ average passengers/hour \\
+        \hline
+        Passenger & High & 190--229 \\
+        \hline
+        Passenger & Moderate & 160--189 \\
+        \hline
+        Passenger & Low & $< 160$ \\
+        \hline
+        Baggage & High & $> 66$th percentile of hourly \nolinkurl{estimated_bags} \\
+        \hline
+        Baggage & Moderate & 33rd--66th percentile \\
+        \hline
+        Baggage & Low & $\leq 33$rd percentile \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Complete hourly passenger-pressure profile with classification band. Source: \texttt{data/simulation/hourly\_passenger\_pressure.csv}. Summarised in \Cref{sec:analytics} (Figure 5.1) and shown in fully annotated form in \Cref{fig:appendix-b-passenger-pressure-timeline}.}
+    \label{tab:appendix-c-hourly-passenger-pressure}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \renewcommand{\arraystretch}{1.20}
+    \begin{tabularx}{\textwidth}{
+        |>{\centering\arraybackslash}p{0.85cm}
+        |>{\centering\arraybackslash}p{1.75cm}
+        |>{\centering\arraybackslash}X
+        |>{\centering\arraybackslash}p{0.85cm}
+        |>{\centering\arraybackslash}p{1.75cm}
+        |>{\centering\arraybackslash}X|
+    }
+        \hline
+        \textbf{Hour} & \textbf{\shortstack{Est.\\passengers}} & \textbf{Band} & \textbf{Hour} & \textbf{\shortstack{Est.\\passengers}} & \textbf{Band} \\
+        \hline
+        00 & 150.3 & Low & 12 & 138.1 & Low \\
+        \hline
+        01 & 155.4 & Low & 13 & 137.6 & Low \\
+        \hline
+        02 & 159.0 & Low & 14 & 139.6 & Low \\
+        \hline
+        03 & 152.1 & Low & 15 & 153.5 & Low \\
+        \hline
+        04 & 162.5 & Moderate & 16 & 175.3 & Moderate \\
+        \hline
+        05 & 203.4 & High & 17 & 158.7 & Low \\
+        \hline
+        06 & 181.6 & Moderate & 18 & 151.4 & Low \\
+        \hline
+        07 & 153.6 & Low & 19 & 157.8 & Low \\
+        \hline
+        08 & 139.9 & Low & 20 & 210.8 & High \\
+        \hline
+        09 & 137.9 & Low & 21 & 191.8 & High \\
+        \hline
+        10 & 141.0 & Low & 22 & 143.0 & Low \\
+        \hline
+        11 & 135.7 & Low & 23 & 151.9 & Low \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Complete hourly baggage-pressure profile with classification band. Source: \texttt{data/simulation/hourly\_baggage\_pressure.csv}. Summarised in \Cref{fig:appendix-b-baggage-pressure-timeline}.}
+    \label{tab:appendix-c-hourly-baggage-pressure}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \renewcommand{\arraystretch}{1.20}
+    \begin{tabularx}{\textwidth}{
+        |>{\centering\arraybackslash}p{0.85cm}
+        |>{\centering\arraybackslash}p{1.75cm}
+        |>{\centering\arraybackslash}X
+        |>{\centering\arraybackslash}p{0.85cm}
+        |>{\centering\arraybackslash}p{1.75cm}
+        |>{\centering\arraybackslash}X|
+    }
+        \hline
+        \textbf{Hour} & \textbf{\shortstack{Est.\\bags}} & \textbf{Band} & \textbf{Hour} & \textbf{\shortstack{Est.\\bags}} & \textbf{Band} \\
+        \hline
+        00 & 300.7 & Moderate & 12 & 276.2 & Low \\
+        \hline
+        01 & 310.7 & Moderate & 13 & 275.2 & Low \\
+        \hline
+        02 & 318.0 & High & 14 & 279.3 & Low \\
+        \hline
+        03 & 304.2 & Moderate & 15 & 307.0 & Moderate \\
+        \hline
+        04 & 324.9 & High & 16 & 350.7 & High \\
+        \hline
+        05 & 406.7 & High & 17 & 317.3 & High \\
+        \hline
+        06 & 363.2 & High & 18 & 302.9 & Moderate \\
+        \hline
+        07 & 307.2 & Moderate & 19 & 315.6 & Moderate \\
+        \hline
+        08 & 279.8 & Low & 20 & 421.5 & High \\
+        \hline
+        09 & 275.7 & Low & 21 & 383.7 & High \\
+        \hline
+        10 & 281.9 & Low & 22 & 285.9 & Low \\
+        \hline
+        11 & 271.4 & Low & 23 & 303.9 & Moderate \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Regression performance for future passenger-pressure forecasting on the held-out test set ($n = 3{,}982$). Source: \texttt{notebooks/forecasting/05\_predictive\_modeling\_and\_forecasting.ipynb}. Reproduced from Chapter 4, Table 4.4.}
+    \label{tab:appendix-c-regression-performance}
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{2.0cm}
+        |>{\centering\arraybackslash}p{2.0cm}
+        |>{\centering\arraybackslash}p{2.0cm}|
+    }
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Model}} &
+        \textbf{MAE} &
+        \textbf{RMSE} &
+        \textbf{$R^2$} \\
+        \hline
+        Random Forest & 34.37 & 48.30 & 0.1803 \\
+        \hline
+        Gradient Boosting & 34.40 & 47.01 & 0.2234 \\
+        \hline
+        XGBoost & 34.07 & 46.72 & 0.2331 \\
+        \hline
+        LightGBM & 34.06 & 46.61 & 0.2366 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Full-feature congestion classifiers on the held-out test set ($n = 3{,}982$), with \texttt{future\_baggage\_pressure} retained as a predictor. These values are affected by information leakage and are reported for methodological transparency, not as deployable performance. Source: \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}. Reproduced from Chapter 4, Table 4.5.}
+    \label{tab:appendix-c-full-feature-classifiers}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \renewcommand{\arraystretch}{1.20}
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{1.55cm}
+        |>{\centering\arraybackslash}p{1.55cm}
+        |>{\centering\arraybackslash}p{1.40cm}
+        |>{\centering\arraybackslash}p{1.25cm}
+        |>{\centering\arraybackslash}p{1.55cm}|
+    }
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Model}} &
+        \textbf{Accuracy} &
+        \textbf{Precision} &
+        \textbf{Recall} &
+        \textbf{F1} &
+        \textbf{\shortstack{ROC-\\AUC}} \\
+        \hline
+        Random Forest & 0.9759 & 1.0000 & 0.9089 & 0.9523 & 1.0000 \\
+        \hline
+        Gradient Boosting & 1.0000 & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        \hline
+        XGBoost & 1.0000 & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        \hline
+        LightGBM & 1.0000 & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Reduced-feature congestion classifiers on the held-out test set ($n = 3{,}982$), with \texttt{future\_baggage\_pressure} excluded. These are the operationally valid results. Source: \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}. Reproduced from Chapter 4, Table 4.6.}
+    \label{tab:appendix-c-reduced-feature-classifiers}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \renewcommand{\arraystretch}{1.20}
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{1.55cm}
+        |>{\centering\arraybackslash}p{1.55cm}
+        |>{\centering\arraybackslash}p{1.40cm}
+        |>{\centering\arraybackslash}p{1.25cm}
+        |>{\centering\arraybackslash}p{1.55cm}|
+    }
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Model}} &
+        \textbf{Accuracy} &
+        \textbf{Precision} &
+        \textbf{Recall} &
+        \textbf{F1} &
+        \textbf{\shortstack{ROC-\\AUC}} \\
+        \hline
+        Random Forest & 0.7657 & 0.7123 & 0.1926 & 0.3032 & 0.7677 \\
+        \hline
+        Gradient Boosting & 0.7705 & 0.6562 & 0.2789 & 0.3915 & 0.7711 \\
+        \hline
+        XGBoost & 0.7803 & 0.6520 & 0.3643 & 0.4674 & 0.7973 \\
+        \hline
+        LightGBM (deployed) & 0.7805 & 0.6520 & 0.3662 & 0.4690 & 0.7914 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Operational-period lookup table driving time-varying processing rate and congestion-risk weighting in the AnyLogic model. Source: \texttt{data/processed/anylogic/anylogic\_operational\_periods.csv}. Reproduced from \Cref{tab:anylogic-operational-periods}.}
+    \label{tab:appendix-c-operational-periods}
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{2.4cm}
+        |>{\centering\arraybackslash}p{2.4cm}
+        |>{\centering\arraybackslash}p{2.0cm}
+        |>{\centering\arraybackslash}p{2.6cm}|
+    }
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Operational period}} &
+        \textbf{Hours} &
+        \textbf{Base processing rate} &
+        \textbf{Staffing level} &
+        \textbf{Congestion-risk weight} \\
+        \hline
+        Morning Peak & 05:00--09:00 & 1.00 & High & 1.25 \\
+        \hline
+        Midday Normal & 10:00--16:00 & 1.00 & Normal & 0.75 \\
+        \hline
+        Evening Peak & 17:00--21:00 & 1.00 & High & 1.30 \\
+        \hline
+        Night Operations & 22:00--04:00 & 0.85 & Reduced & 0.60 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[!htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{AnyLogic scenario-parameter configuration table. Source: \texttt{data/processed/anylogic/anylogic\_scenario\_parameters.csv}. Reproduced from \Cref{tab:anylogic-scenario-parameters}. This five-row configuration schema maps conceptually, but not one-to-one, onto the six executed scenarios documented in \Cref{tab:appendix-c-executed-scenario-config}.}
+    \label{tab:appendix-c-scenario-parameter-schema}
+    \footnotesize
+    \setlength{\tabcolsep}{2.5pt}
+    \renewcommand{\arraystretch}{1.15}
+
+    \begin{tabularx}{\textwidth}{
+        |>{\centering\arraybackslash}p{0.6cm}
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{1.45cm}
+        |>{\centering\arraybackslash}p{1.35cm}
+        |>{\centering\arraybackslash}p{1.45cm}
+        |>{\centering\arraybackslash}p{1.65cm}
+        |>{\centering\arraybackslash}p{2.10cm}|
+    }
+        \hline
+        \textbf{ID} &
+        \multicolumn{1}{c|}{\textbf{Scenario name}} &
+        \textbf{\shortstack{Immig.\\mult.}} &
+        \textbf{\shortstack{Bag.\\mult.}} &
+        \textbf{\shortstack{Cust.\\mult.}} &
+        \textbf{\shortstack{Queue\\threshold}} &
+        \textbf{Intervention} \\
+        \hline
+
+        1 & Baseline & 1.00 & 1.00 & 1.00 & 100 & No \\
+        \hline
+
+        2 & Immigration Capacity +20\% & 1.20 & 1.00 & 1.00 & 100 & No \\
+        \hline
+
+        3 & Baggage Capacity +20\% & 1.00 & 1.20 & 1.00 & 100 & No \\
+        \hline
+
+        4 & Combined Capacity +20\% & 1.20 & 1.20 & 1.15 & 100 & No \\
+        \hline
+
+        5 & Peak Intervention & 1.25 & 1.25 & 1.20 & 80 & Yes \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Scenario-specific AnyLogic configuration parameters as executed. Source: Simulation Results Consolidation and Scientific Interpretation; Simulation Results and Discussion. Reproduced from \Cref{tab:simulation-scenario-config-executed}. All scenarios were run over a 720-minute (12-hour) horizon.}
+    \label{tab:appendix-c-executed-scenario-config}
+    \footnotesize
+    \setlength{\tabcolsep}{2.5pt}
+    \renewcommand{\arraystretch}{1.20}
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}p{1.9cm}
+        |>{\centering\arraybackslash}p{1.55cm}
+        |>{\centering\arraybackslash}p{1.55cm}
+        |>{\centering\arraybackslash}p{1.55cm}
+        |>{\centering\arraybackslash}p{1.15cm}
+        |>{\centering\arraybackslash}p{1.15cm}
+        |>{\centering\arraybackslash}X|
+    }
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Scenario}} &
+        \textbf{Immig. mult.} &
+        \textbf{Bag. mult.} &
+        \textbf{Cust. mult.} &
+        \textbf{Bag. prob.} &
+        \textbf{Cust. prob.} &
+        \textbf{Arrival adjustment} \\
+        \hline
+        00 Baseline & 0.60 & 1.00 & 1.00 & 0.75 & 0.70 & Normal (CSV-based) \\
+        \hline
+        A Immigration & 0.80 & 1.00 & 1.00 & 0.75 & 0.70 & Normal (CSV-based) \\
+        \hline
+        B Baggage & 0.60 & 1.30 & 1.00 & 0.75 & 0.70 & Normal (CSV-based) \\
+        \hline
+        C Peak Stress & 0.60 & 1.30 & 1.00 & 0.85 & 0.80 & +50\% \\
+        \hline
+        D Dynamic &
+        \shortstack{0.60--0.90\\dyn.} &
+        \shortstack{1.30--1.60\\dyn.} &
+        \shortstack{1.00--1.50\\dyn.} &
+        0.85 & 0.80 & +50\% \\
+        \hline
+        E Integrated & 0.80 & 1.30 & 1.00 & 0.75 & 0.70 & Normal (CSV-based) \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Complete KPI comparison across the six simulation scenarios. Source: \texttt{data/simulation/scenario\_kpi\_results.csv}; Simulation Results Consolidation and Scientific Interpretation. Reproduced from \Cref{tab:simulation-kpi-results}. The congestion-severity flag reported by the simulation model is uniformly CRITICAL across all six scenarios and does not correspond to the graded \nolinkurl{Risk_Level} classification used in the Power BI dashboard, as noted in \Cref{sec:conclusion-limitations}.}
+    \label{tab:appendix-c-simulation-kpi-comparison}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \renewcommand{\arraystretch}{1.20}
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}p{4.0cm}
+        |>{\centering\arraybackslash}X
+        |>{\centering\arraybackslash}X
+        |>{\centering\arraybackslash}X
+        |>{\centering\arraybackslash}X
+        |>{\centering\arraybackslash}X
+        |>{\centering\arraybackslash}X|
+    }
+        \hline
+        \multicolumn{1}{|c|}{\textbf{KPI}} &
+        \textbf{00} &
+        \textbf{A} &
+        \textbf{B} &
+        \textbf{C} &
+        \textbf{D} &
+        \textbf{E} \\
+        \hline
+        Generated passengers & 702 & 713 & 735 & 1,065 & 1,065 & 750 \\
+        \hline
+        Exited passengers & 484 & 492 & 573 & 509 & 509 & 565 \\
+        \hline
+        Average system time (min) & 102 & 106 & 83 & 187 & 187 & 78 \\
+        \hline
+        Immigration queue & 80 & 5 & 99 & 436 & 436 & 24 \\
+        \hline
+        Baggage queue & 120 & 198 & 46 & 101 & 101 & 140 \\
+        \hline
+        Customs queue & 1 & 0 & 0 & 0 & 0 & 0 \\
+        \hline
+        Total queue & 201 & 203 & 145 & 537 & 537 & 164 \\
+        \hline
+        Congestion level (model flag) &
+        {\scriptsize CRITICAL} &
+        {\scriptsize CRITICAL} &
+        {\scriptsize CRITICAL} &
+        {\scriptsize CRITICAL} &
+        {\scriptsize CRITICAL} &
+        {\scriptsize CRITICAL} \\
+        \hline
+        Dynamic arrival rate (pax/min) &
+        3.007 & 3.007 & 3.007 & 4.51 & 4.51 & 3.007 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Normalized Scenario performance scores. Source: \texttt{notebooks/visualization/09\_thesis\_visualizations.ipynb}. Visualized in \Cref{fig:appendix-a-scenario-performance-heatmap} and \Cref{fig:appendix-a-scenario-radar-comparison} of Appendix A. Computation given in Code D.9; all four scores are max-normalized relative only to the six scenarios in this comparison set.}
+    \label{tab:appendix-c-normalized-scenario-scores}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \renewcommand{\arraystretch}{1.20}
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{2.6cm}
+        |>{\centering\arraybackslash}p{2.2cm}
+        |>{\centering\arraybackslash}p{2.6cm}
+        |>{\centering\arraybackslash}p{2.4cm}|
+    }
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Scenario}} &
+        \textbf{\shortstack{\texttt{Throughput\_}\\\texttt{Score}}} &
+        \textbf{\shortstack{\texttt{Queue\_}\\\texttt{Score}}} &
+        \textbf{\shortstack{\texttt{System\_Time\_}\\\texttt{Score}}} &
+        \textbf{\shortstack{\texttt{Resilience\_}\\\texttt{Score}}} \\
+        \hline
+        00 Baseline & 0.88 & 0.63 & 0.45 & 0.65 \\
+        \hline
+        A Immigration & 0.89 & 0.62 & 0.43 & 0.65 \\
+        \hline
+        B Baggage & 1.00 & 0.73 & 0.56 & 0.76 \\
+        \hline
+        C Peak Stress & 0.61 & 0.00 & 0.00 & 0.20 \\
+        \hline
+        D Dynamic & 0.61 & 0.00 & 0.00 & 0.20 \\
+        \hline
+        E Integrated & 0.97 & 0.69 & 0.58 & 0.75 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{AnyLogic KPI definitions and dynamic-intervention trigger conditions. KPI definitions from \texttt{data/processed/anylogic/anylogic\_kpi\_definitions.csv} (reproduced from \Cref{tab:anylogic-kpi-definitions}); intervention conditions from the Scenario D implementation reproduced in Code D.7.}
+    \label{tab:appendix-c-kpi-definitions-triggers}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.20}
+    \begin{tabularx}{\textwidth}{
+        |>{\raggedright\arraybackslash}p{3.3cm}
+        |>{\raggedright\arraybackslash}X
+        |>{\centering\arraybackslash}p{3.5cm}|
+    }
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Element}} &
+        \multicolumn{1}{c|}{\textbf{Definition or trigger condition}} &
+        \textbf{Unit or response} \\
+        \hline
+        \nolinkurl{average_wait_time} &
+        Mean Passenger waiting time across processing points &
+        minutes \\
+        \hline
+        \nolinkurl{max_queue_length} &
+        Maximum observed queue length during simulation &
+        passengers \\
+        \hline
+        \nolinkurl{average_queue_length} &
+        Average queue length across simulation period &
+        passengers \\
+        \hline
+        \nolinkurl{throughput_passengers} &
+        Total number of passengers processed &
+        passengers \\
+        \hline
+        \nolinkurl{baggage_delay} &
+        Average baggage processing delay &
+        minutes \\
+        \hline
+        \nolinkurl{congestion_duration} &
+        Total time spent under high congestion conditions &
+        \nolinkurl{simulation_time} \\
+        \hline
+        \nolinkurl{intervention_count} &
+        Number of operational interventions triggered &
+        count \\
+        \hline
+        \nolinkurl{service_level} &
+        Percentage of passengers processed within target time &
+        percentage \\
+        \hline
+        Immigration trigger &
+        \texttt{immigrationQueue.size() > 100} &
+        staff multiplier 0.60 $\rightarrow$ 0.90 \\
+        \hline
+        Baggage trigger &
+        \texttt{baggageQueue.size() > 80} &
+        capacity multiplier 1.30 $\rightarrow$ 1.60 \\
+        \hline
+        Customs trigger &
+        \texttt{customsQueue.size() > 30} &
+        processing multiplier 1.00 $\rightarrow$ 1.50 \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[!htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \caption{Power BI Key Influencers analysis of the likelihood that congestion risk is High. Source: \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}, Operational Intelligence Insights page (Chapter 4, Figure 4.9). Reported in Chapter 4, Section 4.6.5 and Chapter 5, Section 5.4.}
+    \label{tab:appendix-c-powerbi-key-influencers}
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.20}
+    \begin{tabular}{|
+        >{\centering\arraybackslash}p{1.3cm}|
+        >{\raggedright\arraybackslash}p{8.3cm}|
+        >{\centering\arraybackslash}p{4.7cm}|
+    }
+        \hline
+        \textbf{Rank} &
+        \multicolumn{1}{c|}{\textbf{Influencing condition}} &
+        \textbf{\shortstack{Increase in likelihood of\\High congestion risk}} \\
+        \hline
+        1 & Passengers Pressure Level is High & 3.17$\times$ \\
+        \hline
+        2 & Arrival hour is between 19:00 and 21:00 & 3.02$\times$ \\
+        \hline
+        3 & Baggage Pressure Level is High & 2.23$\times$ \\
+        \hline
+        4 & Arrival hour is 06:00 or earlier & 1.48$\times$ \\
+        \hline
+        5 & Arrival month is between May and September & 1.35$\times$ \\
+        \hline
+        6 & Arrival day is Thursday & 1.23$\times$ \\
+        \hline
+    \end{tabular}
+\end{table}
