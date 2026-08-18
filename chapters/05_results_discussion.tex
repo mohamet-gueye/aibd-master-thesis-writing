@@ -8,47 +8,41 @@ This chapter presents and interprets the results produced by the methodological 
 
 The descriptive-analytics stage of the framework characterizes how passenger and baggage demand vary across the operational day at AIBD, using the hourly aggregation of the validated 22,270-record master dataset (\path{hourly_passenger_pressure.csv} and \path{hourly_baggage_pressure.csv}, \path{notebooks/analytics/03_passenger_pressure_analysis.ipynb}). The purpose of this stage is to establish the empirical pressure patterns (arrival banks, peak windows and off-peak troughs) that motivate the feature-engineering, forecasting and simulation stages presented in the remainder of this chapter.
 
-Figure 5.1 presents the full hourly passenger-pressure results. Two arrival banks dominate the operational day. The single highest-pressure hour occurs at 20:00, with an average of 210.8 estimated passengers, classified as ``High'' under the thresholds in \Cref{tab:pressure-classification-rules}; a second, closely comparable peak occurs at 05:00, with 203.4 estimated passengers, also ``High''. The intervening hour of 06:00 remains elevated at 181.6 passengers (``Moderate''), and 21:00 remains high at 191.8 passengers, so that the morning bank (04:00--06:00) and the evening bank (19:00--21:00, rising sharply at 20:00--21:00) each span two to three consecutive hours rather than a single instant. Between these banks, passenger pressure falls substantially: every hour from 07:00 to 15:00 is classified ``Low'', with a minimum of 135.7 passengers at 11:00, 36 percent below the 210.8-passenger evening peak. A smaller, isolated ``Moderate'' bump of 175.3 passengers occurs at 16:00, consistent with the afternoon build-up described in \Cref{subsec:pressure-classification}, before pressure falls back to ``Low'' at 17:00--19:00 ahead of the evening bank. This two-bank, trough-in-the-middle structure is the empirical basis for the 160-passenger operational threshold applied throughout the framework and displayed as a reference line on the Power BI Operational Overview page (\Cref{subsec:powerbi-operational-overview}).
+\Cref{fig:hourly-passenger-pressure-results} presents the full hourly passenger-pressure results. Two arrival banks dominate the operational day. The single highest-pressure hour occurs at 20:00, with an average of 210.8 estimated passengers, classified as ``High'' under the thresholds in \Cref{tab:pressure-classification-rules}; a second, closely comparable peak occurs at 05:00, with 203.4 estimated passengers, also ``High''. The intervening hour of 06:00 remains elevated at 181.6 passengers (``Moderate''), and 21:00 remains high at 191.8 passengers, so that the morning bank (04:00--06:00) and the evening bank (19:00--21:00, rising sharply at 20:00--21:00) each span two to three consecutive hours rather than a single instant. Between these banks, passenger pressure falls substantially: every hour from 07:00 to 15:00 is classified ``Low'', with a minimum of 135.7 passengers at 11:00, 36 percent below the 210.8-passenger evening peak. A smaller, isolated ``Moderate'' bump of 175.3 passengers occurs at 16:00, consistent with the afternoon build-up described in \Cref{subsec:pressure-classification}, before pressure falls back to ``Low'' at 17:00--19:00 ahead of the evening bank. This two-bank, trough-in-the-middle structure is the empirical basis for the 160-passenger operational threshold applied throughout the framework and displayed as a reference line on the Power BI Operational Overview page (\Cref{subsec:powerbi-operational-overview}).
 
-% ---------------------------------------------------------------------------
-% FIGURE 5.1 -- ASSET NOT YET SUPPLIED.
-% Required graphic: hourly passenger-pressure results at AIBD.
-% Source files: data/simulation/hourly_passenger_pressure.csv;
-%               notebooks/analytics/03_passenger_pressure_analysis.ipynb
-% Suggested destination: figures/chapter5/hourly_passenger_pressure_results.png
-% Uncomment after the exact figure asset is added.
-% When activated, change the in-text "Figure 5.1" above to
-% \Cref{fig:hourly-passenger-pressure-results}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter5/hourly_passenger_pressure_results.png}
-%   \caption{Hourly passenger-pressure results at AIBD. The morning arrival bank
-%   (04:00--06:00, peaking at 203.4 passengers at 05:00) and the evening arrival
-%   bank (19:00--21:00, peaking at 210.8 passengers at 20:00) are the two
-%   dominant pressure windows of the operational day, separated by a sustained
-%   low-pressure trough (07:00--15:00, minimum 135.7 passengers at 11:00).
-%   Source: \texttt{data/\allowbreak simulation/\allowbreak hourly\_passenger\_pressure.csv};
-%   \texttt{notebooks/\allowbreak analytics/\allowbreak 03\_passenger\_pressure\_analysis.ipynb}.
-%   The fully annotated version, showing the four-band pressure classification
-%   and labeled operational windows, is provided as Figure B.2; complete hourly
-%   values are tabulated in Table C.4.}
-%   \label{fig:hourly-passenger-pressure-results}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \includegraphics[
+        width=\textwidth,
+        keepaspectratio
+    ]{figures/chapter5/fig_5_1_hourly_passenger_pressure.png}
+    \caption[Hourly passenger-pressure results at AIBD]{Hourly passenger-pressure results at AIBD. The morning arrival bank
+    (04:00--06:00, peaking at 203.4 passengers at 05:00) and the evening arrival
+    bank (19:00--21:00, peaking at 210.8 passengers at 20:00) are the two
+    dominant pressure windows of the operational day, separated by a sustained
+    low-pressure trough (07:00--15:00, minimum 135.7 passengers at 11:00).
+    Source: \nolinkurl{data/simulation/hourly_passenger_pressure.csv};
+    \nolinkurl{notebooks/analytics/03_passenger_pressure_analysis.ipynb}.
+    The fully annotated version, showing the four-band pressure classification
+    and labeled operational windows, is provided as
+    \Cref{fig:appendix-b-passenger-pressure-timeline}; complete hourly values are
+    tabulated in \Cref{tab:appendix-c-hourly-passenger-pressure}.}
+    \label{fig:hourly-passenger-pressure-results}
+\end{figure}
 
-Figure B.3 in Appendix B presents the corresponding hourly baggage-pressure results. The single highest-pressure hour for baggage is again 20:00, at 421.5 estimated bags, followed by 05:00 at 406.7 bags and 21:00 at 383.7 bags; the lowest-pressure hour is 11:00, at 271.4 bags. These values are exactly twice the corresponding passenger figures, because \nolinkurl{estimated_bags} is defined as \nolinkurl{estimated_passengers} multiplied by a constant (\Cref{sec:data-sources}). The baggage profile is consequently identical in shape to the passenger profile and identifies the same two arrival banks; it is presented separately because baggage-reclaim capacity is modeled as a distinct constraint in the simulation, not because it constitutes an independent demand signal. One presentational consequence requires care: the baggage bands (02:00, 04:00--06:00, 16:00--17:00 and 20:00--21:00 classified ``High'') differ from the passenger bands not because baggage demand behaves differently, but because the two indicators are thresholded differently, passenger pressure by fixed cut-points and baggage pressure by the 33rd and 66th percentiles (\Cref{tab:pressure-classification-rules}). Applying the two schemes to the same underlying series assigns different labels to 13 of the 24 hours. The band difference is an artifact of the classification rules and must not be read as evidence that baggage pressure persists longer than passenger pressure.
+Figure B.3 in Appendix B presents the corresponding hourly baggage-pressure results. The highest-pressure hour for baggage is again 20:00, with an estimated 421.5 bags, followed by 05:00 at 406.7 bags and 21:00 at 383.7 bags; the lowest-pressure hour is 11:00, at 271.4 bags. These values are exactly twice the corresponding passenger figures, because \nolinkurl{estimated_bags} is defined as \nolinkurl{estimated_passengers} multiplied by a constant (\Cref{sec:data-sources}). The baggage profile is consequently identical in shape to the passenger profile and identifies the same two arrival banks; it is presented separately because baggage-reclaim capacity is modeled as a distinct constraint in the simulation, not because it constitutes an independent demand signal. One presentational consequence requires care: the baggage bands (02:00, 04:00--06:00, 16:00--17:00 and 20:00--21:00 classified ``High'') differ from the passenger bands not because baggage demand behaves differently, but because the two indicators are thresholded differently, passenger pressure by fixed cut-points and baggage pressure by the 33rd and 66th percentiles (\Cref{tab:pressure-classification-rules}). Applying the two schemes to the same underlying series assigns different labels to 13 of the 24 hours. The band difference is an artifact of the classification rules and must not be read as evidence that baggage pressure persists longer than passenger pressure.
 
-These descriptive results confirm the arrival-bank phenomenon identified in the literature review (\Cref{subsec:predictive-analytics-passenger-flow}): pressure is generated not by isolated flights but by the concentration of several arrivals, and their associated passengers and baggage, within short time windows. The 22,270-record master dataset shows this concentration occurring twice daily at AIBD, at intervals corresponding to the airport's international arrival scheduling. The class-imbalance result reported for the congestion-classification target in \Cref{subsec:forecasting-targets}, 73.5 percent of engineered records labeled as normal conditions and 26.5 percent as high congestion, using the 180-passenger (75th-percentile) threshold, is consistent with this pattern: high-congestion conditions are concentrated in a minority of hours corresponding to the two arrival banks identified above, rather than distributed evenly across the operational day.
+These descriptive results confirm the arrival-bank phenomenon identified in the literature review (\Cref{subsec:predictive-analytics-passenger-flow}): pressure is generated not by isolated flights but by the concentration of several arrivals, and their associated passengers and baggage, within short time windows. The 22,270-record master dataset shows this concentration occurring twice daily at AIBD, at intervals that correspond to the airport's international arrival schedule. The class-imbalance result reported for the congestion-classification target in \Cref{subsec:forecasting-targets}, 73.5 percent of engineered records labeled as normal conditions and 26.5 percent as high congestion, using the 180-passenger (75th-percentile) threshold, is consistent with this pattern: high-congestion conditions are concentrated in a minority of hours corresponding to the two arrival banks identified above, rather than distributed evenly across the operational day.
 
 \subsection{Sensitivity of the pressure profile to the load-factor assumption}
 \label{subsec:load-factor-sensitivity}
 
-Because the load factor of 0.82 is an assumption rather than an observed quantity (\Cref{sec:data-sources}), the Sensitivity of the descriptive results to that assumption was examined directly. The hourly profile was recomputed across the range 0.75 to 0.90, which spans the values plausibly applicable to a mixed regional and long-haul arrival operation, with the classification thresholds of \Cref{tab:pressure-classification-rules} held constant. \Cref{tab:load-factor-sensitivity} reports the outcome.
+Because the load factor of 0.82 is an assumption rather than an observed quantity (\Cref{sec:data-sources}), the Sensitivity of the descriptive results to that assumption was examined directly. The hourly profile was recomputed over the range 0.75 to 0.90, which spans values plausibly applicable to a mixed regional and long-haul arrival operation, with the classification thresholds in \Cref{tab:pressure-classification-rules} held constant. \Cref{tab:load-factor-sensitivity} reports the outcome.
 
 \begin{table}[H]
     \centering
-    \caption{Sensitivity of the hourly passenger-pressure profile to the assumed
+    \caption[Load-factor sensitivity of the passenger-pressure profile]{Sensitivity of the hourly passenger-pressure profile to the assumed
     load factor ($n = 22{,}270$; classification thresholds held constant at the
     values in Table 4.3).}
     \label{tab:load-factor-sensitivity}
@@ -104,7 +98,7 @@ Two consequences follow. First, the arrival-bank structure identified in this se
 \subsection{Passenger-pressure regression results}
 \label{subsec:passenger-pressure-regression-results}
 
-The regression results reported in \Cref{tab:regression-performance} show that all four models explain only a limited proportion of the variance in \nolinkurl{future_passenger_pressure}, with $R^2$ ranging from 0.1803 (Random Forest) to 0.2366 (LightGBM, the best-performing model), and MAE values clustered between 34.06 and 34.40 passengers. This combination, a relatively low $R^2$ alongside a comparatively stable MAE across all four algorithms, is best read as a property of the prediction target rather than of the algorithms applied to it. Because \nolinkurl{estimated_passengers} is the product of a twelve-entry seat-capacity lookup and a single constant load factor, it resolves to ten discrete values across the entire dataset (\Cref{sec:data-sources}); predicting its one-step-ahead value is therefore closer to predicting the seat class of the next arriving aircraft than to forecasting a continuous demand process. The narrow spread of MAE across four structurally different algorithms, 34.06 to 34.40 passengers, a range of one percent, is consistent with that interpretation: all four converge on the same ceiling because the ceiling is imposed by the proxy, not by model capacity. The result is accordingly reported here as a boundary condition on aircraft-type-based demand estimation, establishing what such a proxy cannot support, rather than as a forecasting performance to be improved by further tuning. As shown in Figure B.4 of Appendix B, the Random Forest feature-importance ranking is dominated by \nolinkurl{week_of_year} (0.118), followed by the rolling and lagged operational-history features (\nolinkurl{rolling_mean_3} 0.089, \nolinkurl{lag_3_passengers} 0.074, \nolinkurl{lag_1_passengers} 0.057), with cyclical hour and month encodings contributing more modestly (\nolinkurl{hour_sin} 0.054, \nolinkurl{month_cos} 0.040, \nolinkurl{arrival_hour} 0.039). The ranking also lists \nolinkurl{rolling_bags_mean_3} at 0.093; because that variable is exactly twice \nolinkurl{rolling_mean_3} by construction (\Cref{sec:data-sources}), the two are perfectly collinear and are treated here as a single operational-history signal rather than as two independent predictors. Figures B.5 and B.6 in Appendix B show that the resulting XGBoost predictions track the broad shape of the demand pattern established in \Cref{sec:analytics} while under-predicting some of the sharpest peaks, and that residuals are approximately zero-centered but retain a moderate spread, consistent with the reported $R^2$ of 0.2331. Taken together, the regression evidence establishes the upper limit of what aircraft-type-based demand estimation supports at this horizon, and that limit carries directly into the classification task examined next, where the same proxy underlies the congestion target.
+The regression results reported in \Cref{tab:regression-performance} show that all four models explain only a limited proportion of the variance in \nolinkurl{future_passenger_pressure}, with $R^2$ ranging from 0.1803 (Random Forest) to 0.2366 (LightGBM, the best-performing model), and MAE values clustered between 34.06 and 34.40 passengers. This combination, a relatively low $R^2$ alongside a comparatively stable MAE across all four algorithms, is best read as a property of the prediction target rather than of the algorithms applied to it. Because \nolinkurl{estimated_passengers} is the product of a twelve-entry seat-capacity lookup and a single constant load factor, it resolves to ten discrete values across the entire dataset (\Cref{sec:data-sources}); predicting its one-step-ahead value is therefore closer to predicting the seat class of the next arriving aircraft than to forecasting a continuous demand process. The narrow spread of MAE across four structurally different algorithms, 34.06 to 34.40 passengers, a range of one percent, is consistent with that interpretation: all four converge on the same ceiling because the ceiling is imposed by the proxy, not by model capacity. Accordingly, the result is reported here as a boundary condition on aircraft-type-based demand estimation, establishing what such a proxy cannot support, rather than as a forecasting performance to be improved by further tuning. As shown in Figure B.4 of Appendix B, the Random Forest feature-importance ranking is dominated by \nolinkurl{week_of_year} (0.118), followed by the rolling and lagged operational-history features (\nolinkurl{rolling_mean_3} 0.089, \nolinkurl{lag_3_passengers} 0.074, \nolinkurl{lag_1_passengers} 0.057), with cyclical hour and month encodings contributing more modestly (\nolinkurl{hour_sin} 0.054, \nolinkurl{month_cos} 0.040, \nolinkurl{arrival_hour} 0.039). The ranking also lists \nolinkurl{rolling_bags_mean_3} at 0.093; because that variable is exactly twice \nolinkurl{rolling_mean_3} by construction (\Cref{sec:data-sources}), the two are perfectly collinear and are treated here as a single operational-history signal rather than as two independent predictors. Figures B.5 and B.6 in Appendix B show that the resulting XGBoost predictions track the broad shape of the demand pattern established in \Cref{sec:analytics} while under-predicting some of the sharpest peaks, and that residuals are approximately zero-centered but retain a moderate spread, consistent with the reported $R^2$ of 0.2331. Taken together, the regression evidence establishes the upper limit of what aircraft-type-based demand estimation supports at this horizon, and that limit carries directly into the classification task examined next, where the same proxy underlies the congestion target.
 
 \subsection{Congestion-classification results}
 \label{subsec:congestion-classification-results}
@@ -113,30 +107,22 @@ The congestion-classification results in \Cref{tab:full-feature-congestion-class
 
 Figure B.12 in Appendix B extends the single-model feature-importance view already presented for the Random Forest classifier in Figure B.10 by comparing normalized feature importance across all four reduced-feature classifiers. Gradient Boosting and Random Forest concentrate the importance heavily on the cyclical time-of-day features (\nolinkurl{hour_cos}, \nolinkurl{hour_sin}) and \nolinkurl{arrival_hour}, while XGBoost and LightGBM distribute the importance more evenly across rolling and Lag operational-history features (\nolinkurl{rolling_bags_mean_3}, \nolinkurl{rolling_mean_3}, \nolinkurl{lag_1_passengers}, \nolinkurl{lag_3_passengers}) alongside the same temporal features. This cross-model comparison shows that the two feature families identified in \Cref{subsec:congestion-classification}, cyclical time-of-day encoding and operational history, are consistently influential across all four algorithms, even though individual algorithms weight them differently.
 
-Figure 5.2 presents the ROC curve for the Random Forest classifier with reduced characteristics (AUC = 0.7677), corresponding to the value reported in \Cref{tab:reduced-feature-congestion-classifiers}. In contrast to the artificially perfect curve that nearly curves incline to the curve affected by the full-feature model affected by leakage (Figure B.9), this curve shows a smoother, more gradual trade-off between true and false-positive rates that is representative of the genuine operational discrimination of classifiers once \nolinkurl{future_baggage_pressure} is excluded.
+\Cref{fig:reduced-rf-roc} presents the ROC curve for the Random Forest classifier with reduced characteristics (AUC = 0.7677), corresponding to the value reported in \Cref{tab:reduced-feature-congestion-classifiers}. In contrast to the artificially perfect curve that nearly curves incline to the curve affected by the full-feature model affected by leakage (Figure B.9), this curve shows a smoother, more gradual trade-off between true and false-positive rates that is representative of the genuine operational discrimination of classifiers once \nolinkurl{future_baggage_pressure} is excluded.
 
-% ---------------------------------------------------------------------------
-% FIGURE 5.2 -- ASSET NOT YET SUPPLIED.
-% Required original ROC figure from
-% notebooks/forecasting/06_congestion_classification.ipynb
-% Suggested destination: figures/chapter5/
-% Suggested filename (SUGGESTED ONLY -- not verified against the repository):
-%   reduced_random_forest_roc_curve.png
-% Uncomment only after the original high-quality asset is added.
-% When activated, change the in-text "Figure 5.2" above to
-% \Cref{fig:reduced-rf-roc}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter5/reduced_random_forest_roc_curve.png}
-%   \caption{ROC curve for the reduced-feature Random Forest congestion
-%   classifier (AUC = 0.7677), representing the realistic operational
-%   discrimination achieved once the \texttt{future\_baggage\_pressure} leakage
-%   variable is removed
-%   (\texttt{notebooks/\allowbreak forecasting/\allowbreak 06\_congestion\_classification.ipynb}).}
-%   \label{fig:reduced-rf-roc}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \includegraphics[
+        width=0.72\textwidth,
+        keepaspectratio
+    ]{figures/chapter5/fig_5_2_reduced_random_forest_roc_curve.png}
+    \caption[Reduced-feature Random Forest ROC curve]{ROC curve for the reduced-feature Random Forest congestion
+    classifier (AUC = 0.7677), representing the realistic operational
+    discrimination achieved once the \texttt{future\_baggage\_pressure} leakage
+    variable is removed
+    (\nolinkurl{notebooks/forecasting/06_congestion_classification.ipynb}).}
+    \label{fig:reduced-rf-roc}
+\end{figure}
 
 Figure B.15 in Appendix B presents a SHAP dependence plot for \nolinkurl{arrival_hour} on the reduced XGBoost classifier, colored by \nolinkurl{rolling_bags_mean_3}. The plot shows that the SHAP contribution of \nolinkurl{arrival_hour} to the predicted congestion probability is strongly negative (reducing the predicted congestion risk) for arrivals between approximately 07:00 and 13:00, directly corresponding to the low-pressure trough identified in Figure 5.1, and becomes strongly positive (increasing the predicted congestion risk) for arrivals from approximately 15:00 through 23:00, with the largest positive contributions concentrated around 19:00--21:00. Higher values of \nolinkurl{rolling_bags_mean_3} (shown in magenta) are concentrated within this same high-risk evening region, indicating that the classifier learns a compounding effect between the time-of-day signal and recent baggage-pressure history rather than treating them as independent predictors.
 
@@ -153,10 +139,12 @@ The AnyLogic simulation was executed for a 12-hour operational horizon (720 simu
     \setlength{\tabcolsep}{3pt}
     \renewcommand{\arraystretch}{1.30}
 
-    \caption{Scenario-specific AnyLogic configuration parameters
+    \caption[Scenario-specific AnyLogic configuration parameters]{Scenario-specific AnyLogic configuration parameters
     (Simulation Results Consolidation and Scientific Interpretation;
     Simulation Results and Discussion).}
     \label{tab:simulation-scenario-config-executed}
+    
+    \setlength{\tabcolsep}{4pt}
 
     \begin{tabularx}{\textwidth}{
         |>{\raggedright\arraybackslash}p{2.15cm}
@@ -199,9 +187,9 @@ The AnyLogic simulation was executed for a 12-hour operational horizon (720 simu
         \hline
 
         D Dynamic Intervention &
-        \multicolumn{1}{c|}{\shortstack{Dynamic\\(0.60--0.90)}} &
-        \multicolumn{1}{c|}{\shortstack{Dynamic\\(1.30--1.60)}} &
-        \multicolumn{1}{c|}{\shortstack{Dynamic\\(1.00--1.50)}} &
+        \multicolumn{1}{c|}{{\scriptsize\shortstack{Dynamic\\(0.60--0.90)}}} &
+        \multicolumn{1}{c|}{{\scriptsize\shortstack{Dynamic\\(1.30--1.60)}}} &
+        \multicolumn{1}{c|}{{\scriptsize\shortstack{Dynamic\\(1.00--1.50)}}} &
         0.85 & 0.80 & +50\% \\
         \hline
 
@@ -220,10 +208,12 @@ Scenario D operationalizes the adaptive-intervention logic summarised in \Cref{s
     \setlength{\tabcolsep}{3pt}
     \renewcommand{\arraystretch}{1.30}
 
-    \caption{Simulation KPI outputs by scenario
+    \caption[Simulation KPI outputs by scenario]{Simulation KPI outputs by scenario
     (\texttt{scenario\_kpi\_results.csv};
     Simulation Results Consolidation and Scientific Interpretation).}
     \label{tab:simulation-kpi-results}
+
+    \setlength{\tabcolsep}{4pt}
 
     \begin{tabularx}{\textwidth}{
         |>{\raggedright\arraybackslash}p{3.25cm}
@@ -276,73 +266,55 @@ Scenario D operationalizes the adaptive-intervention logic summarised in \Cref{s
     \end{tabularx}
 \end{table}
 
-Figure 5.3 presents the process-specific queue outcomes on which the remainder of this section depends, comparing \nolinkurl{Immigration_Queue} and \nolinkurl{Baggage_Queue} across the six scenarios, and Figure 5.4 relates the generated to successfully processed demand across the same scenarios. Together, they establish the study's central operational result: the near elimination of the immigration queue under Scenario A is accompanied by the largest baggage queue of any non-surge scenario, thereby relocating congestion rather than removing it. The corresponding average system-time comparison is reproduced as Figure A.5 in Appendix A, and the throughput-only view as Figure A.6. Scenario B (Baggage Optimization) achieves the highest exited-passenger count of any scenario (573), ahead of Scenario E (565), despite Scenario B receiving fewer generated passengers (735) than Scenario C or D (1,065 each); Scenario C and Scenario D, despite generating the largest passenger volumes, exit only 509 passengers each, fewer than Scenario B in absolute terms, demonstrating that generated demand and successfully processed throughput are not proportional once a scenario's processing capacity is exceeded.
+\Cref{fig:simulation-queue-comparison} presents the process-specific queue outcomes on which the remainder of this section depends, comparing \nolinkurl{Immigration_Queue} and \nolinkurl{Baggage_Queue} across the six scenarios, and \Cref{fig:simulation-throughput-comparison} relates the generated demand to successfully processed demand across the same scenarios. Together, they establish the study's central operational result: the near elimination of the immigration queue under Scenario A is accompanied by the largest baggage queue of any non-surge scenario, thereby relocating congestion rather than removing it. The corresponding average system-time comparison is reproduced in \Cref{fig:appendix-a-average-system-time}, and the throughput-only view in \Cref{fig:appendix-a-passenger-throughput}. Scenario B (Baggage Optimization) achieves the highest exited-passenger count of any scenario (573), ahead of Scenario E (565), despite Scenario B receiving fewer generated passengers (735) than Scenario C or D (1,065 each); Scenario C and Scenario D, despite generating the largest passenger volumes, exit only 509 passengers each, fewer than Scenario B in absolute terms, demonstrating that generated demand and successfully processed throughput are not proportional once a scenario's processing capacity is exceeded.
 
-% ---------------------------------------------------------------------------
-% FIGURE 5.3 -- ASSET NOT YET SUPPLIED.
-% Required original scientific graphic. Likely source per the thesis caption:
-%   notebooks/analytics/09_thesis_visualizations.ipynb
-% Suggested destination: figures/chapter5/
-% Suggested filename (SUGGESTED ONLY -- not verified against the repository):
-%   simulation_queue_comparison.png
-% Uncomment only after the original high-quality asset is added and its
-% actual repository path has been verified.
-% When activated, change the in-text "Figure 5.3" above to
-% \Cref{fig:simulation-queue-comparison}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter5/simulation_queue_comparison.png}
-%   \caption{Immigration- and baggage-queue length by simulation scenario. The
-%   reduction of the immigration queue under Scenario A (80 to 5 passengers) is
-%   accompanied by an increase in the baggage queue (120 to 198 passengers),
-%   demonstrating that congestion relieved at one processing stage migrates to
-%   the next (\texttt{scenario\_kpi\_results.csv};
-%   \texttt{notebooks/\allowbreak analytics/\allowbreak 09\_thesis\_visualizations.ipynb}).}
-%   \label{fig:simulation-queue-comparison}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \includegraphics[
+        width=\textwidth,
+        keepaspectratio
+    ]{figures/chapter5/fig_5_3_queue_comparison_by_scenario.png}
+    \caption[Immigration and baggage queues by simulation scenario]{Immigration- and baggage-queue length by simulation scenario. The
+    reduction of the immigration queue under Scenario A (80 to 5 passengers) is
+    accompanied by an increase in the baggage queue (120 to 198 passengers),
+    demonstrating that congestion relieved at one processing stage migrates to
+    the next (\nolinkurl{scenario_kpi_results.csv};
+    \nolinkurl{notebooks/analytics/09_thesis_visualizations.ipynb}).}
+    \label{fig:simulation-queue-comparison}
+\end{figure}
 
-% ---------------------------------------------------------------------------
-% FIGURE 5.4 -- ASSET NOT YET SUPPLIED.
-% Required original scientific graphic. Likely source per the thesis caption:
-%   notebooks/analytics/09_thesis_visualizations.ipynb
-% Suggested destination: figures/chapter5/
-% Suggested filename (SUGGESTED ONLY -- not verified against the repository):
-%   generated_vs_exited_passengers.png
-% Uncomment only after the original high-quality asset is added and its
-% actual repository path has been verified.
-% When activated, change the in-text "Figure 5.4" above to
-% \Cref{fig:simulation-throughput-comparison}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter5/generated_vs_exited_passengers.png}
-%   \caption{Generated versus exited passengers by simulation scenario. Scenario
-%   C and Scenario D generate the largest passenger volumes (1,065 each) but exit
-%   only 509 passengers each, fewer in absolute terms than Scenario B (573 exited
-%   from 735 generated), illustrating that throughput is capacity-limited rather
-%   than demand-limited once queues saturate
-%   (\texttt{scenario\_kpi\_results.csv};
-%   \texttt{notebooks/\allowbreak analytics/\allowbreak 09\_thesis\_visualizations.ipynb}).}
-%   \label{fig:simulation-throughput-comparison}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \includegraphics[
+        width=\textwidth,
+        keepaspectratio
+    ]{figures/chapter5/fig_5_4_generated_vs_exited_passengers.png}
+    \caption[Generated versus exited passengers by simulation scenario]{Generated versus exited passengers by simulation scenario. Scenario
+    C and Scenario D generate the largest passenger volumes (1,065 each) but exit
+    only 509 passengers each, fewer in absolute terms than Scenario B (573 exited
+    from 735 generated), illustrating that throughput is capacity-limited rather
+    than demand-limited once queues saturate
+    (\nolinkurl{scenario_kpi_results.csv};
+    \nolinkurl{notebooks/analytics/09_thesis_visualizations.ipynb}).}
+    \label{fig:simulation-throughput-comparison}
+\end{figure}
 
 \subsection{Scenario-by-scenario interpretation}
 \label{subsec:scenario-by-scenario-interpretation}
 
-Scenario 00 (Baseline) reproduces current estimated operating conditions and reveals substantial congestion: the baggage queue (120 passengers) exceeds the immigration queue (80 passengers), and the baseline average system time of 102 minutes and \nolinkurl{Resilience_Score} of 0.65 (\Cref{tab:simulation-kpi-results}) establish the reference point against which the five improvement scenarios are compared.
+Scenario 00 (Baseline) reproduces current estimated operating conditions and reveals subst. It reveals that the baggage queue (120 passengers) exceeds the immigration queue (80 passengers), and the baseline average system time of 102 minutes and \nolinkurl{Resilience_Score} of 0.65 (\Cref{tab:simulation-kpi-results}) establish the reference point against which the five improvement scenarios are compared.
 
 Scenario A (Immigration Optimization) reduces the immigration queue from 80 to 5 passengers, a 94 percent reduction, by raising the immigration-staffing multiplier from 0.60 to 0.80. This improvement is not, however, reflected in the average system time, which rises slightly to 106 minutes, because the baggage queue simultaneously increases from 120 to 198 passengers (a 65 percent increase). Passengers move through immigration faster than the baggage-reclaim process can absorb them, so that the bottleneck migrates downstream rather than being removed from the system. This bottleneck-migration effect is the central operational finding reported in the Simulation Results Consolidation and Scientific Interpretation document and is reproduced here exactly as observed.
 
 Scenario B (Baggage Optimization) raises the baggage-capacity multiplier from 1.00 to 1.30 and produces the strongest single-intervention outcome in the study: the baggage queue falls from 120 to 46 passengers, exited passengers rise from 484 to 573, and average system time falls from 102 to 83 minutes, a reduction of 19 minutes, or approximately 19 percent relative to baseline. The immigration queue rises only marginally, from 80 to 99 passengers, indicating a comparatively contained downstream effect relative to Scenario A. Scenario B also attains the highest \nolinkurl{Resilience_Score} of the six scenarios (0.76, \Cref{tab:simulation-kpi-results}), ahead of Scenario E (0.75), and the lowest \nolinkurl{Total_Queue} (145 passengers, computed as \nolinkurl{Immigration_Queue} + \nolinkurl{Baggage_Queue} + \nolinkurl{Customs_Queue}), consistent with the scenario-ranking summary in Figure A.10 of Appendix A, discussed in Section 5.4.
 
-Scenario C (Peak Stress Test) applies a +50 percent arrival-rate adjustment, along with elevated baggage- and customs-check probabilities, to represent overlapping international arrival waves, modeled on concurrent arrivals in Dubai, Istanbul, and Paris. The scenario generates the study's largest passenger volume (1,065) but exposes a severe capacity shortfall: the immigration queue rises to 436 passengers (a 445 percent increase relative to baseline), and average system time rises to 187 minutes (an 83 percent increase). Only 509 of the 1,065 generated passengers exit the simulated system within the 720-minute horizon, and the scenario records the lowest \nolinkurl{Throughput_Score}, \nolinkurl{Queue_Score}, and \nolinkurl{System_Time_Score} among the six scenarios, resulting in the lowest \nolinkurl{Resilience_Score} (0.20).
+Scenario C (Peak Stress Test) applies a +50 percent arrival-rate adjustment, along with elevated baggage- and customs-check probabilities, to represent overlapping international arrival waves, modeled on concurrent arrivals in Dubai, Istanbul, and Paris. The scenario generates the study's largest passenger volume (1,065) but ex. Still, it exposes a capacity shortfall: the immigration queue rises to 436 passengers (a 445 percent increase relative to baseline), and average system time rises to 187 minutes (an 83 percent increase). Only 509 of the 1,065 generated passengers exit the simulated system within the 720-minute horizon, and the scenario records the lowest \nolinkurl{Throughput_Score}, \nolinkurl{Queue_Score}, and \nolinkurl{System_Time_Score} among the six scenarios, resulting in the lowest \nolinkurl{Resilience_Score} (0.20).
 
 Scenario D (Dynamic Intervention) applies the same elevated arrival rate and baggage/customs probability assumptions as Scenario C, but adds the three queue-triggered capacity rules described above. Despite the adaptive mechanism activating during simulation execution, Scenario D produces KPI outputs numerically identical to Scenario C across every reported metric (Generated 1,065; Exited 509; Average System Time 187 minutes; Immigration Queue 436; Baggage Queue 101; \nolinkurl{Resilience_Score} 0.20). This is reported as observed, exactly as recorded in \path{scenario_kpi_results.csv} and in both simulation-narrative source documents; the Simulation Results and Discussion document interprets this outcome as evidence of an operational saturation limit (that dynamic, queue-triggered capacity increases are insufficient to absorb a +50 percent arrival surge once the underlying processing capacity is exceeded) while noting that even a fully adaptive intervention mechanism could not, on this occasion, produce a KPI improvement over the non-adaptive Scenario C configuration. This finding is examined further as a limitation in Section 5.7. Figure 4.4 (\Cref{subsec:simulation-architecture-scenarios}) illustrates the three-stage decision logic underlying this scenario.
 
-Scenario E (Integrated Optimization) combines the immigration-staffing increase of Scenario A (multiplier 0.80) with the baggage-capacity increase of Scenario B (multiplier 1.30) under normal (non-surge) arrival conditions. This combination produces the lowest average system time of the six scenarios (78 minutes, a 24 percent reduction relative to baseline) and the second-highest exited-passenger count (565). The immigration queue falls to 24 passengers while the baggage queue rises to 140 passengers (Figure 5.3), again illustrating bottleneck migration, though less severely than in Scenario A alone, since baggage capacity has also been increased. Scenario E attains the second-highest \nolinkurl{Resilience_Score} (0.75), narrowly behind Scenario B (0.76). Read across the six scenarios, the pattern is consistent: performance improves only where the intervention addresses the stage that is actually binding, and single-subsystem changes otherwise relocate congestion rather than remove it. The following section examines that pattern across all four normalized performance dimensions simultaneously.
+Scenario E (Integrated Optimization) combines the immigration-staffing increase of Scenario A (multiplier 0.80) with the baggage-capacity increase of Scenario B (multiplier 1.30) under normal (non-surge) arrival conditions. This combination produces the lowest average system time of the six scenarios (78 minutes, a 24 percent reduction relative to baseline) and the second-highest exited-passenger count (565). The immigration queue falls to 24 passengers while the baggage queue rises to 140 passengers (\Cref{fig:simulation-queue-comparison}), again illustrating bottleneck migration, though less severely than in Scenario A alone, since baggage capacity has also been increased. Scenario E attains the second-highest \nolinkurl{Resilience_Score} (0.75), narrowly behind Scenario B (0.76). Read across the six scenarios, the pattern is consistent: performance improves only where the intervention addresses the stage that is actually binding, and single-subsystem changes otherwise relocate congestion rather than remove it. The following section examines that pattern across all four normalized performance dimensions simultaneously.
 
 \subsection{Multidimensional scenario comparison}
 \label{subsec:multidimensional-scenario-comparison}
@@ -351,12 +323,12 @@ Figure A.9 in Appendix A presents a Sankey diagram of passenger flow for Scenari
 
 Figure A.8 in Appendix A presents the four normalized performance scores (\nolinkurl{Throughput_Score}, \nolinkurl{Queue_Score}, \nolinkurl{System_Time_Score}, \nolinkurl{Resilience_Score}) for all six scenarios on a single radar chart. Scenarios B and E produce the largest, most balanced quadrilaterals, making them the two best-performing configurations across all four dimensions simultaneously, while Scenarios 00 and A occupy an intermediate position. Because Scenario C and Scenario D share numerically identical \nolinkurl{Queue_Score} (0.00), \nolinkurl{System_Time_Score} (0.00), and \nolinkurl{Throughput_Score} (0.61) values (\Cref{tab:simulation-kpi-results}), their radar profiles are geometrically identical, and the Scenario D line is plotted directly over, and therefore visually obscures, the Scenario C line, a direct graphical consequence of the identical-KPI finding discussed in \Cref{subsec:scenario-by-scenario-interpretation} and revisited in Section 5.7.
 
-Taken together, the scenario results support five findings, consistent with the interpretation recorded in the Simulation Results Consolidation and Scientific Interpretation document: baggage-reclaim capacity is the dominant operational bottleneck at baseline conditions; single-subsystem improvements (Scenarios A and B) relocate rather than eliminate congestion; overlapping peak-hour demand (Scenario C) can overwhelm the simulated system regardless of subsystem-level configuration; a queue-triggered dynamic-intervention mechanism (Scenario D), while operationally more sophisticated, did not outperform the equivalent static configuration under the tested surge conditions; and an integrated, multi-subsystem configuration (Scenario E) produces the strongest balance between system time and throughput under normal demand, narrowly behind Scenario B on \nolinkurl{Resilience_Score} alone.
+Taken together, the scenario results support five findings, consistent with the interpretation recorded in the Simulation Results Consolidation and Scientific Interpretation document: baggage-reclaim capacity is the dominant operational bottleneck at baseline conditions; single-subsystem improvements (Scenarios A and B) relocate rather than eliminate congestion; overlapping peak-hour demand (Scenario C) can overwhelm the along with system regardless of subsystem-level configuration; a queue-triggered dynamic-intervention mechanism (Scenario D), while operationally more sophisticated, did not outperform the equivalent static configuration under the tested surge conditions; and an integrated, multi-subsystem configuration (Scenario E) produces the strongest balance between system time and throughput under normal demand, narrowly behind Scenario B on \nolinkurl{Resilience_Score} alone.
 
 \section{DSS Outputs}
 \label{sec:dss-outputs}
 
-The Power BI Decision Support System translates the analytics, forecasting, and simulation results presented above into the five manager-facing pages described in \Cref{sec:decision-support-system}. The Operational Overview page (Figure 4.5) displays the passenger-pressure and baggage-pressure timelines of \Cref{sec:analytics} alongside the 160-passenger threshold reference line and headline KPI cards for the currently selected scenario. The Scenario Comparison page (Figure 4.6) reproduces the throughput, queue, and resilience results of \Cref{sec:simulation-results} within an Operational Scenario Ranking and Recommendation Matrix that assigns each of the six scenarios a qualitative \nolinkurl{Risk_Level} (Moderate, High, or Critical) and a recommendation status (Recommended, Acceptable, or Not Recommended), computed from the same \path{scenario_kpi_results.csv} table analyzed in \Cref{sec:simulation-results}.
+The Power BI Decision Support System translates the analytics, forecasting, and simulation results presented above into the five manager-facing pages described in \Cref{sec:decision-support-system}. The Operational Overview page (Figure 4.5) displays the passenger-pressure and baggage-pressure timelines from \Cref{sec:analytics}, along with the 160-passenger threshold reference line and headline KPI cards for the currently selected scenario. The Scenario Comparison page (Figure 4.6) reproduces the throughput, queue, and resilience results of \Cref{sec:simulation-results} within an Operational Scenario Ranking and Recommendation Matrix that assigns each of the six scenarios a qualitative \nolinkurl{Risk_Level} (Moderate, High, or Critical) and a recommendation status (Recommended, Acceptable, or Not Recommended), computed from the same \path{scenario_kpi_results.csv} table analyzed in \Cref{sec:simulation-results}.
 
 Figure A.10 in Appendix A presents a scenario-ranking summary generated from the same underlying KPI table (\path{notebooks/analytics/09_thesis_visualizations.ipynb}) and structured as an executive-style output comparable to the Executive Decision Support Center page of the dashboard (Figure 4.8, \Cref{subsec:powerbi-executive-dss}). The summary identifies Scenario B as both the best-throughput scenario (573 exited passengers) and the highest-resilience scenario (0.76), Scenario B as the lowest-total-queue scenario (145 passengers), and Scenario E as the lowest-average-system-time scenario (78 minutes), directly reproducing the KPI results reported in \Cref{tab:simulation-kpi-results} and confirming, from an independently generated summary view, the same best-performing scenarios identified through the detailed scenario-by-scenario analysis in \Cref{subsec:scenario-by-scenario-interpretation}.
 
@@ -365,11 +337,11 @@ The Dynamic Intervention Monitoring page (Figure 4.7) operationalizes the Scenar
 \section{Interpretation}
 \label{sec:interpretation}
 
-The results presented in \Cref{sec:analytics,sec:forecasting-results,sec:simulation-results,sec:dss-outputs} can be interpreted in relation to the analytical themes and gaps identified in the literature review (\Cref{chap:literature-review}). Four points of comparison are developed below: the short-horizon orientation of the forecasting results; the operational rather than schedule-based nature of the most influential predictors; the propagation of congestion across interdependent processing stages; and the relationship between prediction, simulation, and decision support.
+The results presented in \Cref{sec:analytics,sec:forecasting-results,sec:simulation-results,sec:dss-outputs} can be interpreted in relation to the analytical themes and gaps identified in the literature review (\Cref{chap:literature-review}). Four points of comparison are developed below: the short-horizon orientation of the forecasting results; the operational, rather than schedule-based, nature of the most influential predictors; the propagation of congestion across interdependent processing stages; and the relationship among prediction, simulation, and decision support.
 
-The passenger-pressure regression results (\Cref{subsec:passenger-pressure-regression-results}) are consistent with the short-horizon emphasis identified by \textcite{orsini2019neural}, who found that a direct LSTM strategy performed best at forecast horizons of approximately twenty minutes or less when predicting terminal passenger behavior from WiFi traces at Bologna Airport. The one-step-ahead (next-arrival) forecasting horizon adopted in this thesis reflects the same principle, that arrival-side operational forecasts are most reliably constructed over short horizons, although the $R^2$ achieved here (0.1803--0.2366) is substantially lower than would be expected from a purpose-built short-horizon architecture such as Orsini et al.’s LSTM, indicating that the tree-based ensemble methods used in this thesis, while operationally interpretable through feature importance, may not fully exploit the short-horizon temporal structure that a sequence model could capture.
+The passenger-pressure regression results (\Cref{subsec:passenger-pressure-regression-results}) are consistent with the short-horizon emphasis identified by \textcite{orsini2019neural}, who found that a direct LSTM strategy performed best at forecast horizons of approximately twenty minutes or less when predicting terminal passenger behavior from WiFi traces at Bologna Airport. The one-step-ahead (next-arrival) forecasting horizon adopted in this thesis reflects the same principle: arrival-side operational forecasts are most reliably constructed over short horizons. However, the $R^2$ achieved here (0.1803--0.2366) is substantially lower than would be expected from a purpose-built short-horizon architecture such as Orsini et al.’s LSTM, indicating that the tree-based ensemble methods used in this thesis, while operationally interpretable through feature importance, may not fully exploit the short-horizon temporal structure that a sequence model could capture.
 
-The dominance of operational and temporal features (\nolinkurl{week_of_year}, rolling and lag passenger/baggage history, and cyclical hour encoding) over static flight-level attributes in both the regression feature importance (\Cref{subsec:passenger-pressure-regression-results}) and the SHAP analysis (Figure B.15) is consistent with the finding of \citeauthor{shao2019flight} (\citeyear{shao2019flight}, \citeyear{shao2022predicting}) that airport-complexity and situational-awareness features are principal drivers of delay-prediction performance at Los Angeles International Airport, and with \textcite{zhang2021spatiotemporal}, who found that spatio-temporal flight-tracking features materially improved delay-prediction robustness over schedule-based inputs alone. The present results extend this pattern from flight-delay prediction to passenger-pressure and congestion-risk prediction: in both problem domains, recent operational history and temporal context outperform static, schedule-level information.
+The dominance of operational and temporal features (\nolinkurl{week_of_year}, rolling and lag passenger/baggage history, and cyclical hour encoding) over static flight-level attributes in both the regression feature importance (\Cref{subsec:passenger-pressure-regression-results}) and the SHAP analysis (Figure B.15) is consistent with the finding of \citeauthor{shao2019flight} (\citeyear{shao2019flight}, \citeyear{shao2022predicting}) that airport-complexity and situational-awareness features are principal drivers of delay-prediction performance at Los Angeles International Airport, and with \textcite{zhang2021spatiotemporal}, who found that spatio-temporal flight-tracking features materially improved delay-prediction robustness over schedule-based inputs alone. The present results extend this pattern from flight-delay prediction to passenger pressure and congestion risk prediction: in both problem domains, recent operational history and temporal context outperform static, schedule-level information.
 
 The bottleneck-migration effect observed in Scenarios A, B, and E (\Cref{subsec:scenario-by-scenario-interpretation}), in which relieving congestion at one processing stage increases congestion at an adjacent stage, is an intra-airport analog of the inter-airport congestion-propagation effect reported by \textcite{zhu2024spatiotemporal}, who found that delay propagates across a network of Chinese airports in a manner that a self-corrective, causality-informed graph neural network captured more effectively than simple distance-based representations. Where Zhu et al. examine propagation between airports, the present results show an equivalent propagation effect between processing stages within a single airport’s arrival system, reinforcing the conclusion, identified as the first literature gap in \Cref{sec:literature-gaps}, that arrival-side operations must be analyzed as a connected sequence of interdependent stages rather than through single-process evaluation.
 
@@ -386,18 +358,18 @@ For immigration officers and airport managers responsible for staffing, the desc
 
 For airline and ground-handling teams responsible for baggage-reclaim operations, the baggage-pressure results in \Cref{sec:analytics} show that baggage demand peaks in the same two arrival banks as passenger demand, and the Scenario B result shows that increasing baggage-processing capacity alone produces the strongest single-intervention improvement in the study (a 19-minute reduction in average system time and the highest \nolinkurl{Resilience_Score} of the six scenarios, 0.76). This identifies baggage-reclaim capacity as the single highest-priority operational investment among the interventions tested, consistent with the interpretation recorded in the Simulation Results Consolidation and Scientific Interpretation document that ``baggage reclaim operations represent a major airport bottleneck''.
 
-For airport executives evaluating overall system configuration, the \nolinkurl{Resilience_Score} results (\Cref{tab:simulation-kpi-results}) indicate that Scenario B (Baggage Optimization) and Scenario E (Integrated Optimization) are the two configurations best able to sustain performance under the tested demand conditions (0.76 and 0.75 respectively), both substantially ahead of the 0.65 baseline and dramatically ahead of the 0.20 scores recorded for Scenario C and Scenario D under peak-stress conditions. The near-identical performance of Scenario D to the non-adaptive Scenario C indicates that the dynamic-intervention logic, as currently specified, does not by itself provide a resilience advantage under a +50 percent arrival surge, and that infrastructure- or scheduling-level capacity expansion may be required in addition to real-time operational adaptation for AIBD to remain resilient under comparable stress conditions.
+For airport executives evaluating overall system configuration, the \nolinkurl{Resilience_Score} results (\Cref{tab:simulation-kpi-results}) indicate that Scenario B (Baggage Optimization) and Scenario E (Integrated Optimization) are the two configurations best able to sustain performance under the tested demand conditions (0.76 and 0.75 respectively), both substantially ahead of the 0.65 baseline and dramatically ahead of the 0.20 scores recorded for Scenario C and Scenario D under peak-stress conditions. The near-identical performance of Scenario D to that of the non-adaptive Scenario C indicates that the dynamic-intervention logic, as currently specified, does not, by itself, provide a resilience advantage under a +50 percent arrival surge. That infrastructure- or scheduling-level capacity expansion may be required in addition to real-time operational adaptation for AIBD to remain resilient under comparable stress conditions.
 
 These findings align directly with the strategic priorities articulated by AIBD leadership. In the interview conducted for this thesis, AIBD CEO Askin Demir identified AI-powered systems, predictive analytics, crowd-management optimization, smart queuing systems, and dynamic staff allocation as priorities for improving passenger flow and specifically noted that predictive analytics is intended to forecast peak passenger flows and optimize staffing allocation to shorten queues \parencite{demir2025speaker}. The evening- and morning-bank forecasts produced in \Cref{sec:forecasting-results}, the bottleneck-migration and resilience results produced in \Cref{sec:simulation-results}, and the Key Influencers outputs produced in \Cref{sec:dss-outputs} together operationalize exactly this priority: they identify when peak flows are expected, which process is affected, and which operational configuration is best able to absorb the resulting pressure. The CEO interview also referenced the planned deployment of e-gates and self-service technologies as part of AIBD’s operational modernization \parencite{demir2025speaker}; the immigration-capacity scenarios evaluated in this thesis (Scenarios A and E) provide a quantitative basis for estimating the downstream (baggage-side) consequences of such immigration-side capacity investments before they are implemented.
 
-For passengers, the combined effect of these operational applications is intended to be a shorter, more predictable arrival experience, particularly during the two identified arrival banks, achieved through resource allocation planned of demand rather than adjusted only after congestion has already accumulated.
+For passengers, the combined effect of these operational applications is intended to be a shorter, more predictable arrival experience, particularly during the two identified arrival banks, achieved through resource allocation planned for demand rather than adjusted only after congestion has already accumulated.
 
 \section{Limitations}
 \label{sec:results-limitations}
 
 Several limitations of the analytical, forecasting, simulation, and decision-support components affect the interpretation of the results presented in this chapter.
 
-First, passenger and baggage demand throughout the framework is estimated rather than directly observed manifests: it is derived from a fixed aircraft-type-to-seat-capacity lookup (\Cref{tab:aircraft-seat-capacity}), a constant 0.82 load factor, and the assumption of two bags per passenger at 23 kilograms each (\Cref{sec:data-sources}). These assumptions are applied uniformly across all routes, airlines, and seasons and are not calibrated against actual passenger or baggage counts, so that the absolute magnitude of the pressure figures reported in \Cref{sec:analytics} (although internally consistent across the analytics, forecasting, simulation, and dashboard layers) should be interpreted as a consistent proxy for demand rather than as a validated measurement of it. The sensitivity analysis reported in \Cref{subsec:load-factor-sensitivity} quantifies the consequences of this assumption: the timing of the arrival banks is invariant across the range 0.75 to 0.90, whereas the pressure-band classification is not.
+First, passenger and baggage demand throughout the framework is estimated rather than directly observed manifests: it is derived from a fixed aircraft-type-to-seat-capacity lookup (\Cref{tab:aircraft-seat-capacity}), a constant 0.82 load factor, and the assumption of two bags per passenger at 23 kilograms each (\Cref{sec:data-sources}). These assumptions are applied uniformly across all routes, airlines, and seasons. They are recalibrated against actual passenger or baggage counts, so that the absolute magnitude of the pressure figures reported in \Cref{sec:analytics} (although internally consistent across the analytics, forecasting, simulation, and dashboard layers) should be interpreted as a consistent proxy for demand rather than as a validated measurement of it. The Sensitivity analysis reported in \Cref{subsec:load-factor-sensitivity} quantifies the consequences of this assumption: the timing of the arrival banks is invariant across the range 0.75 to 0.90, whereas the pressure-band classification is not.
 
 A further consequence of this construction is that it affects what the demand indicators can support analytically. Because \nolinkurl{estimated_bags} is a constant multiple of \nolinkurl{estimated_passengers}, the two are perfectly correlated ($r = 1.0000$), and the baggage indicator adds no information beyond the passenger indicator; any result presented as a comparison between passenger and baggage demand is a comparison of one series with itself rescaled. Relatedly, because the passenger proxy resolves to only ten distinct values, the regression task of \Cref{subsec:passenger-pressure-regression-results} is structurally bounded, and the $R^2$ values reported in \Cref{tab:regression-performance} should be read as a property of the proxy rather than as a limitation of the algorithms evaluated. Establishing baggage demand as an independently forecastable quantity would require observed baggage counts.
 

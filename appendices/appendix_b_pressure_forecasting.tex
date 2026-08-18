@@ -13,7 +13,7 @@ Appendix B contains the complete analytical and forecasting record derived from 
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_1_estimated_passengers_distribution.png}
-    \caption{Distribution of \nolinkurl{estimated_passengers} across the 22,270 validated commercial arrival records. The multimodal shape reflects the discrete seat-capacity bands of Table C.2 combined with the fixed 0.82 load factor. Source: \texttt{notebooks/preprocessing/02\_data\_validation.ipynb}. Supports \Cref{sec:data-sources}.}
+    \caption[Distribution of estimated passenger loads]{Distribution of \nolinkurl{estimated_passengers} across the 22,270 validated commercial arrival records. The multimodal shape reflects the discrete seat-capacity bands of Table C.2 combined with the fixed 0.82 load factor. Source: \texttt{notebooks/preprocessing/02\_data\_validation.ipynb}. Supports \Cref{sec:data-sources}.}
     \label{fig:appendix-b-passenger-distribution}
 \end{figure}
 
@@ -24,7 +24,7 @@ Appendix B contains the complete analytical and forecasting record derived from 
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_2_hourly_passenger_pressure_annotated.png}
-    \caption{Fully annotated hourly passenger-pressure timeline: average estimated passengers by arrival hour, color-coded by the four-band classification of Table C.3, with the five operational windows labeled and the key operational insights summarised beneath the axis. This is the detailed version of the summary profile presented as Figure 5.1 in Chapter 5; complete hourly values are tabulated in Table C.4. Source: \texttt{data/simulation/hourly\_passenger\_pressure.csv}.}
+    \caption[Annotated hourly passenger-pressure timeline]{Fully annotated hourly passenger-pressure timeline: average estimated passengers by arrival hour, color-coded by the four-band classification of Table C.3, with the five operational windows labeled and the key operational insights summarised beneath the axis. This is the detailed version of the summary profile presented as Figure 5.1 in Chapter 5; complete hourly values are tabulated in Table C.4. Source: \texttt{data/simulation/hourly\_passenger\_pressure.csv}.}
     \label{fig:appendix-b-passenger-pressure-timeline}
 \end{figure}
 
@@ -35,7 +35,7 @@ Appendix B contains the complete analytical and forecasting record derived from 
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_3_hourly_baggage_pressure_annotated.png}
-    \caption{Fully annotated hourly baggage-pressure timeline: average estimated bags by arrival hour, color-coded by the three-band percentile classification of Table C.3, with the five operational windows labeled. Values are exactly twice the corresponding passenger figures by construction (\Cref{sec:data-sources}), so the profile is identical in shape to Figure B.2. The difference between the baggage and passenger band labels reflects the different thresholding schemes applied to the two indicators, not different demand behavior, as explained in \Cref{sec:analytics}. Complete hourly values are tabulated in Table C.5. Source: \texttt{data/simulation/hourly\_baggage\_pressure.csv}.}
+    \caption[Annotated hourly baggage-pressure timeline]{Fully annotated hourly baggage-pressure timeline: average estimated bags by arrival hour, color-coded by the three-band percentile classification of Table C.3, with the five operational windows labeled. Values are exactly twice the corresponding passenger figures by construction (\Cref{sec:data-sources}), so the profile is identical in shape to Figure B.2. The difference between the baggage and passenger band labels reflects the different thresholding schemes applied to the two indicators, not different demand behavior, as explained in \Cref{sec:analytics}. Complete hourly values are tabulated in Table C.5. Source: \texttt{data/simulation/hourly\_baggage\_pressure.csv}.}
     \label{fig:appendix-b-baggage-pressure-timeline}
 \end{figure}
 
@@ -49,7 +49,7 @@ Appendix B contains the complete analytical and forecasting record derived from 
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_4_regression_feature_importance.png}
-    \caption{Top 15 features by Random Forest importance for the
+    \caption[Random Forest regression feature importance]{Top 15 features by Random Forest importance for the
     \nolinkurl{future_passenger_pressure} regression task, led by
     \nolinkurl{week_of_year} (0.118), \nolinkurl{rolling_bags_mean_3}
     (0.093) and \nolinkurl{rolling_mean_3} (0.089). The two rolling
@@ -67,7 +67,7 @@ Appendix B contains the complete analytical and forecasting record derived from 
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_5_actual_vs_predicted_passenger_pressure.png}
-    \caption{Actual versus XGBoost-predicted passenger pressure for the
+    \caption[Actual versus predicted passenger pressure]{Actual versus XGBoost-predicted passenger pressure for the
     first 200 observations from the held-out test set
     ($n = 3{,}982$), showing that the production regressor follows the
     broad shape of demand variation while under-predicting some peak
@@ -83,7 +83,7 @@ Appendix B contains the complete analytical and forecasting record derived from 
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_6_regression_residual_distribution.png}
-    \caption{Distribution of prediction residuals for the XGBoost
+    \caption[Passenger-pressure regression residual distribution]{Distribution of prediction residuals for the XGBoost
     passenger-pressure regressor on the held-out test set. The
     distribution is approximately centered on zero with a moderate
     spread, consistent with the reported R-squared of 0.2331 and MAE of
@@ -108,7 +108,7 @@ transparency rather than as performance estimates.
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_7_congestion_class_distribution.png}
-    \caption{Class distribution of the
+    \caption[Congestion-target class distribution]{Class distribution of the
     \texttt{is\_high\_congestion} target in
     \texttt{ml\_dataset.csv}: 14,636 records (73.5 percent) labeled as
     normal conditions and 5,271 records (26.5 percent) as high congestion.
@@ -125,7 +125,7 @@ transparency rather than as performance estimates.
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_8_full_feature_confusion_matrix.png}
-    \caption{Confusion matrix for the full-feature Random Forest classifier
+    \caption[Full-feature Random Forest confusion matrix]{Confusion matrix for the full-feature Random Forest classifier
     on the held-out test set ($n = 3{,}982$): 2,928 true negatives, no
     false positives, 96 false negatives and 958 true positives,
     corresponding to the precision of 1.0000 and recall of 0.9089 reported
@@ -141,7 +141,7 @@ transparency rather than as performance estimates.
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_9_full_feature_roc_curve.png}
-    \caption{ROC curve for the full-feature Random Forest classifier
+    \caption[Full-feature Random Forest ROC curve]{ROC curve for the full-feature Random Forest classifier
     (AUC = 1.0000). The near-perfect separation is a consequence of the
     retained \texttt{future\_baggage\_pressure} variable rather than
     genuine forecasting skill. The corresponding curves for the
@@ -163,7 +163,7 @@ transparency rather than as performance estimates.
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_10_reduced_feature_importance.png}
-    \caption{Top 15 classification features for the reduced-feature Random Forest classifier, after \nolinkurl{future_baggage_pressure} was removed. Cyclical time-of-day features and rolling or lagged operational-history features become dominant. Source: \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}.}
+    \caption[Reduced-feature Random Forest feature importance]{Top 15 classification features for the reduced-feature Random Forest classifier, after \nolinkurl{future_baggage_pressure} was removed. Cyclical time-of-day features and rolling or lagged operational-history features become dominant. Source: \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}.}
     \label{fig:appendix-b-reduced-rf-feature-importance}
 \end{figure}
 
@@ -174,7 +174,7 @@ transparency rather than as performance estimates.
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_11_reduced_importance_raw_scale.png}
-     \caption{Raw feature-importance scores across the four reduced-feature
+     \caption[Raw feature importance across reduced classifiers]{Raw feature-importance scores across the four reduced-feature
     classifiers, plotted on the native scale returned by each algorithm.
     LightGBM reports split-count importances on a substantially larger
     numeric scale than the importance measures returned by Random Forest,
@@ -194,7 +194,7 @@ transparency rather than as performance estimates.
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_12_reduced_importance_normalised.png}
-    \caption{Normalized feature importance across the four reduced-feature
+    \caption[Normalized feature importance across reduced classifiers]{Normalized feature importance across the four reduced-feature
     classifiers. Gradient Boosting and Random Forest concentrate importance
     on the cyclical time features and \nolinkurl{arrival_hour}, while XGBoost
     and LightGBM distribute importance more evenly across the rolling and lag
@@ -214,7 +214,7 @@ transparency rather than as performance estimates.
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_13_shap_summary_reduced_xgboost.png}
-    \caption{SHAP summary plot for the reduced XGBoost classifier, showing
+    \caption[SHAP summary plot for reduced XGBoost classifier]{SHAP summary plot for the reduced XGBoost classifier, showing
     the distribution of per-observation SHAP contributions for the
     highest-impact features. Source:
     \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}.
@@ -229,7 +229,7 @@ transparency rather than as performance estimates.
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_14_shap_mean_absolute_values.png}
-    \caption{Mean absolute SHAP value by feature for the reduced XGBoost
+    \caption[Mean absolute SHAP values by feature]{Mean absolute SHAP value by feature for the reduced XGBoost
     classifier, ranking \texttt{hour\_cos} (0.72) and
     \texttt{arrival\_hour} (0.25) as the dominant contributors to
     predicted congestion probability. Source:
@@ -244,7 +244,7 @@ transparency rather than as performance estimates.
         height=0.78\textheight,
         keepaspectratio
     ]{figures/appendix_b/fig_b_15_shap_dependence_arrival_hour.png}
-    \caption{SHAP dependence plot for \texttt{arrival\_hour}, coloured by
+    \caption[SHAP dependence plot for arrival hour]{SHAP dependence plot for \texttt{arrival\_hour}, coloured by
     \texttt{rolling\_bags\_mean\_3}. The contribution of
     \texttt{arrival\_hour} is strongly negative between approximately
     07:00 and 13:00 and strongly positive from approximately 15:00

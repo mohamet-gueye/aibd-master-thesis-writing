@@ -1,2 +1,348 @@
 \chapter{Code and Implementation Snippets}
-\label{app:code-implementation}
+\label{app:code-implementation-snippets}
+
+Appendix D documents the implementation logic underlying the reported results. The extracts preserve the original variable names, constants, thresholds, and control flow as implemented in the project notebooks, AnyLogic model, and Power BI measures; formatting has been adjusted only for legibility. Only code that directly produces a result reported in Chapters 4 or 5 is included. Complete notebooks are available as separate electronic files.
+
+\renewcommand{\lstlistingname}{Code}
+\renewcommand{\thelstlisting}{\thechapter.\arabic{lstlisting}}
+\setcounter{lstlisting}{0}
+
+\captionsetup[lstlisting]{
+    justification=raggedright,
+    singlelinecheck=false,
+    labelsep=period
+}
+
+\lstdefinestyle{thesispython}{
+    language=Python,
+    basicstyle=\ttfamily\footnotesize,
+    frame=lines,
+    breaklines=true,
+    breakatwhitespace=false,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    numbers=none,
+    captionpos=t
+}
+
+\begin{lstlisting}[
+    style=thesispython,
+    caption={Non-passenger flight classification and seat-capacity mapping applied during data validation. Source: \texttt{notebooks/preprocessing/02\_data\_validation.ipynb}. Produces the 22,270-record validated master dataset of \Cref{tab:appendix-c-validation-pipeline}.},
+    label={code:appendix-d-data-validation}
+]
+SEAT_CAPACITY = {
+    "A319": 140, "A320": 180, "A321": 220,
+    "B737": 160, "B738": 189, "B38M": 189,
+    "A333": 290, "A332": 260, "B763": 260,
+    "B77W": 396, "B788": 242
+}
+DEFAULT_SEATS = 150
+LOAD_FACTOR = 0.82
+AVG_BAGS_PER_PASSENGER = 2
+AVG_BAG_WEIGHT_KG = 23
+
+def is_non_passenger_flight(row):
+    operating_as  = str(row.get("operating_as", "")).upper()
+    callsign      = str(row.get("callsign", "")).upper()
+    aircraft_type = str(row.get("type", "")).upper()
+
+    cargo_airlines = {"FDX", "FX", "UPS", "5X", "DHL",
+                      "DHK", "CLX", "BCS", "GTI", "ETC"}
+    freighter_types = {"B77F", "B763F", "B744F",
+                       "A332F", "MD11F", "AN12", "A400"}
+    military_prefixes = ("BAF", "FAF", "RAF", "RCH", "NATO")
+
+    if operating_as in cargo_airlines:
+        return True
+    if aircraft_type in freighter_types:
+        return True
+    if re.match(r"^(N|D|F|9H|OE|HB)[A-Z0-9]+$", callsign):
+        return True
+    if callsign.startswith(military_prefixes):
+        return True
+    return False
+
+df["estimated_seats"] = df["type"].map(SEAT_CAPACITY).fillna(DEFAULT_SEATS)
+df["estimated_passengers"] = df["estimated_seats"] * LOAD_FACTOR
+df["estimated_bags"] = df["estimated_passengers"] * AVG_BAGS_PER_PASSENGER
+df["estimated_baggage_weight_kg"] = df["estimated_bags"] * AVG_BAG_WEIGHT_KG
+\end{lstlisting}
+
+\begin{lstlisting}[
+    style=thesispython,
+    caption={Cyclical temporal encoding of arrival hour and month. Source: \texttt{notebooks/forecasting/04\_feature\_engineering.ipynb}. Produces the \texttt{hour\_sin}, \texttt{hour\_cos}, \texttt{month\_sin}, and \texttt{month\_cos} features identified as dominant predictors in Figures B.12 and B.15 of Appendix B.},
+    label={code:appendix-d-cyclical-encoding}
+]
+df["hour_sin"]  = np.sin(2 * np.pi * df["arrival_hour"] / 24)
+df["hour_cos"]  = np.cos(2 * np.pi * df["arrival_hour"] / 24)
+df["month_sin"] = np.sin(2 * np.pi * df["arrival_month"] / 12)
+df["month_cos"] = np.cos(2 * np.pi * df["arrival_month"] / 12)
+
+df["is_night_operation"] = np.where(
+    (df["arrival_hour"] >= 22) | (df["arrival_hour"] <= 5), 1, 0)
+
+df["is_peak_hour"] = np.where(
+    ((df["arrival_hour"] >= 5)  & (df["arrival_hour"] <= 7)) |
+    ((df["arrival_hour"] >= 16) & (df["arrival_hour"] <= 21)), 1, 0)
+\end{lstlisting}
+
+\begin{lstlisting}[style=thesispython, caption={Passenger-pressure classification. Source: \texttt{notebooks/analytics/03\_passenger\_pressure\_analysis.ipynb}. Implements the fixed four-band rule of \Cref{tab:appendix-c-pressure-rules} and produces the classification shown in Chapter 5, Figure 5.1, and, in fully annotated form, in \Cref{fig:appendix-b-passenger-pressure-timeline}.}, label={code:appendix-d-passenger-pressure-classification}]
+def classify_passenger_pressure(passengers):
+    if passengers >= 230:
+        return "Critical"
+    elif passengers >= 190:
+        return "High"
+    elif passengers >= 160:
+        return "Moderate"
+    else:
+        return "Low"
+
+hourly_passenger_pressure["pressure_level"] = (
+    hourly_passenger_pressure["estimated_passengers"]
+    .apply(classify_passenger_pressure)
+)
+\end{lstlisting}
+
+\begin{lstlisting}[style=thesispython, caption={Baggage-pressure classification. Source: \texttt{notebooks/analytics/03\_passenger\_pressure\_analysis.ipynb}. Implements the percentile-based three-band rule of \Cref{tab:appendix-c-pressure-rules}, in contrast to the fixed thresholds used for passenger pressure, and produces the classification shown, in fully annotated form, in \Cref{fig:appendix-b-baggage-pressure-timeline}.}, label={code:appendix-d-baggage-pressure-classification}]
+q1 = hourly_baggage_pressure["estimated_bags"].quantile(0.33)
+q2 = hourly_baggage_pressure["estimated_bags"].quantile(0.66)
+
+def classify_baggage_pressure(bags):
+    if bags <= q1:
+        return "Low"
+    elif bags <= q2:
+        return "Moderate"
+    else:
+        return "High"
+
+hourly_baggage_pressure["baggage_pressure_level"] = (
+    hourly_baggage_pressure["estimated_bags"]
+    .apply(classify_baggage_pressure)
+)
+\end{lstlisting}
+
+\begin{lstlisting}[
+    style=thesispython,
+    caption={Construction of the three forecasting targets. Source: \texttt{notebooks/forecasting/04\_feature\_engineering.ipynb} and \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}. Note that \texttt{is\_high\_congestion} is defined twice across the pipeline: the feature-engineering notebook derives it from the current \texttt{estimated\_passengers} at the 75th percentile (180.40), while the classification notebook redefines it on the one-step-ahead \texttt{future\_passenger\_pressure} at a rounded threshold of 180. The second definition is the operative one for all classifier results reported in \Cref{tab:appendix-c-full-feature-classifiers} and \Cref{tab:appendix-c-reduced-feature-classifiers} and yields the 14,636/5,271 class split shown in Chapter 4, Figure 4.5.},
+    label={code:appendix-d-forecasting-targets}
+]
+# --- notebooks/forecasting/04_feature_engineering.ipynb ---
+df["future_passenger_pressure"] = df["estimated_passengers"].shift(-1)
+df["future_baggage_pressure"]   = df["estimated_bags"].shift(-1)
+
+high_pressure_threshold = df["estimated_passengers"].quantile(0.75)
+# -> 180.40 passengers
+df["is_high_congestion"] = np.where(
+    df["estimated_passengers"] >= high_pressure_threshold, 1, 0)
+
+# --- notebooks/forecasting/06_congestion_classification.ipynb ---
+# target redefined on the FUTURE value; this version is operative
+threshold = 180
+df["is_high_congestion"] = (
+    df["future_passenger_pressure"] >= threshold
+).astype(int)
+# value_counts -> 0: 14636, 1: 5271
+\end{lstlisting}
+
+\begin{lstlisting}[
+    style=thesispython,
+    caption={Model configurations for the regression and classification tasks. Source: \texttt{notebooks/forecasting/05\_predictive\_modeling\_and\_forecasting.ipynb} and \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}. Produces the results of \Cref{tab:appendix-c-regression-performance}, \Cref{tab:appendix-c-full-feature-classifiers}, and \Cref{tab:appendix-c-reduced-feature-classifiers}.},
+    label={code:appendix-d-model-configurations}
+]
+# Regression (target: future_passenger_pressure)
+RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
+GradientBoostingRegressor(n_estimators=200, learning_rate=0.05,
+                          max_depth=5, random_state=42)
+XGBRegressor(n_estimators=200, learning_rate=0.05, max_depth=6,
+             subsample=0.8, colsample_bytree=0.8, random_state=42)
+LGBMRegressor(n_estimators=200, learning_rate=0.05,
+              max_depth=6, random_state=42)
+
+# Classification (target: is_high_congestion)
+RandomForestClassifier(n_estimators=200, max_depth=10,
+                       random_state=42, n_jobs=-1)
+GradientBoostingClassifier(random_state=42)
+XGBClassifier(n_estimators=200, learning_rate=0.05, max_depth=6,
+              subsample=0.8, colsample_bytree=0.8, random_state=42)
+LGBMClassifier(n_estimators=200, learning_rate=0.05,
+               max_depth=6, random_state=42)
+
+# Split: 80/20, random_state=42; stratify=y for classification only
+# -> train n = 15,925 ; test n = 3,982
+
+# Reduced-feature specification (removes the leakage variable)
+X = df.drop(columns=["is_high_congestion", "future_baggage_pressure"])
+\end{lstlisting}
+
+\lstdefinestyle{thesisjava}{
+    language=Java,
+    basicstyle=\ttfamily\footnotesize,
+    frame=lines,
+    breaklines=true,
+    breakatwhitespace=false,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    numbers=none,
+    captionpos=t
+}
+
+\lstdefinestyle{thesisdax}{
+    basicstyle=\ttfamily\footnotesize,
+    frame=lines,
+    breaklines=true,
+    breakatwhitespace=false,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    numbers=none,
+    captionpos=t
+}
+
+\begin{lstlisting}[
+    style=thesisjava,
+    caption={Dynamic-intervention logic implemented in Scenario D. Source: AnyLogic model, \texttt{models/AIBD\_ArrivalFlow\_v1}; reproduced in Simulation Results Consolidation and Scientific Interpretation. Written in Java and executed within the AnyLogic environment. Corresponds to the decision framework of Chapter 4, Figure 4.4, and the trigger conditions of \Cref{tab:appendix-c-kpi-definitions-triggers}.},
+    label={code:appendix-d-dynamic-intervention}
+]
+// Immigration intervention
+if (immigrationQueue.size() > 100) {
+    immigrationStaffMultiplier = 0.90;
+} else {
+    immigrationStaffMultiplier = 0.60;
+}
+
+// Baggage intervention
+if (baggageQueue.size() > 80) {
+    baggageCapacityMultiplier = 1.60;
+} else {
+    baggageCapacityMultiplier = 1.30;
+}
+
+// Customs intervention
+if (customsQueue.size() > 30) {
+    customsProcessingMultiplier = 1.50;
+} else {
+    customsProcessingMultiplier = 1.00;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[
+    style=thesisdax,
+    caption={Power BI DAX measures and calculated columns. Source: \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}. These reproduce the Python-side definitions of \Cref{code:appendix-d-passenger-pressure-classification} and \Cref{code:appendix-d-baggage-pressure-classification} within the dashboard layer, ensuring that the operational categories shown to managers are identical to those used in the analytics and simulation stages.},
+    label={code:appendix-d-powerbi-dax}
+]
+Total Queue =
+    SUM(scenario_kpi_results[Immigration_Queue])
+  + SUM(scenario_kpi_results[Baggage_Queue])
+  + SUM(scenario_kpi_results[Customs_Queue])
+
+Throughput Efficiency =
+    DIVIDE(
+        SUM(scenario_kpi_results[Exited_Passengers]),
+        SUM(scenario_kpi_results[Generated_Passengers])
+    )
+
+Pressure Level =
+    IF([Avg Passengers] >= 230, "Critical",
+    IF([Avg Passengers] >= 190, "High",
+    IF([Avg Passengers] >= 160, "Moderate", "Low")))
+
+Baggage Pressure Level =
+    VAR q1 = PERCENTILEX.INC(hourly_baggage, [Avg Bags], 0.33)
+    VAR q2 = PERCENTILEX.INC(hourly_baggage, [Avg Bags], 0.66)
+    RETURN
+        IF([Avg Bags] <= q1, "Low",
+        IF([Avg Bags] <= q2, "Moderate", "High"))
+\end{lstlisting}
+
+\begin{lstlisting}[
+    style=thesispython,
+    caption={Computation of the four normalized scenario performance scores. Source: \texttt{notebooks/visualization/09\_thesis\_visualizations.ipynb}. Produces the values of \Cref{tab:appendix-c-normalized-scenario-scores} and the visualisations of \Cref{fig:appendix-a-scenario-performance-heatmap} and \Cref{fig:appendix-a-scenario-radar-comparison} in Appendix A. All scores are max-normalised relative only to the six scenarios in the comparison set and are therefore relative rather than absolute measures.},
+    label={code:appendix-d-normalized-performance-scores}
+]
+df_perf["Throughput_Efficiency"] = (
+    df_perf["Exited_Passengers"] / df_perf["Generated_Passengers"])
+
+df_perf["Total_Queue"] = (
+    df_perf["Immigration_Queue"]
+  + df_perf["Baggage_Queue"]
+  + df_perf["Customs_Queue"])
+
+df_perf["Throughput_Score"] = (
+    df_perf["Throughput_Efficiency"]
+  / df_perf["Throughput_Efficiency"].max())
+
+df_perf["Queue_Score"] = (
+    1 - (df_perf["Total_Queue"] / df_perf["Total_Queue"].max()))
+
+df_perf["System_Time_Score"] = (
+    1 - (df_perf["Average_System_Time"]
+       / df_perf["Average_System_Time"].max()))
+
+df_perf["Resilience_Score"] = df_perf[
+    ["Throughput_Score", "Queue_Score", "System_Time_Score"]
+].mean(axis=1)
+\end{lstlisting}
+
+\begin{lstlisting}[
+    style=thesispython,
+    caption={Time-based (chronological) validation procedure. Source: \texttt{notebooks/forecasting/07\_time\_based\_validation.ipynb}. This configuration excludes both the one-step-ahead targets and the three direct demand variables used to construct the target, yet returned accuracy, precision, recall, F1, and ROC-AUC of 1.0000 on the chronological test partition. The extract is included so that the anomaly recorded in \Cref{subsec:congestion-classification-results} and \Cref{sec:conclusion-limitations} can be independently re-examined.},
+    label={code:appendix-d-chronological-validation}
+]
+df["synthetic_datetime"] = (
+    pd.to_datetime("2025-01-01")
+  + pd.to_timedelta(df["week_of_year"] * 7, unit="D")
+  + pd.to_timedelta(df["arrival_hour"], unit="h"))
+
+df = df.sort_values(by="synthetic_datetime").reset_index(drop=True)
+
+split_index = int(len(df) * 0.8)
+train_df = df.iloc[:split_index]   # n = 15,925
+test_df  = df.iloc[split_index:]   # n =  3,982
+
+leakage_columns = [
+    "is_high_congestion", "synthetic_datetime",
+    "future_passenger_pressure", "future_baggage_pressure",
+    "estimated_passengers", "estimated_bags",
+    "estimated_baggage_weight_kg"]
+
+X_train = train_df.drop(columns=leakage_columns)   # 22 features
+y_train = train_df["is_high_congestion"]
+
+time_lgbm = LGBMClassifier(n_estimators=200, learning_rate=0.05,
+                           max_depth=6, random_state=42)
+time_lgbm.fit(X_train, y_train)
+
+# Reported result: Accuracy / Precision / Recall / F1 / ROC-AUC = 1.0000
+\end{lstlisting}
+
+\begin{lstlisting}[
+    style=thesispython,
+    caption={FR24 historical data collection, phased backfill, and merge. Source: \texttt{src/preprocessing/historical\_backfill\_2024\_2026.py}, \texttt{historical\_backfill\_2025.py}, \texttt{historical\_backfill\_phase2.py}, \texttt{merge\_all\_historical\_data.py} and \texttt{merge\_historical\_phases.py}. Produces the 50,385-record raw archive of \Cref{tab:appendix-c-validation-pipeline}, step 1.},
+    label={code:appendix-d-fr24-historical-backfill}
+]
+# Collection endpoint and phased date ranges
+BASE_URL = "https://fr24api.flightradar24.com/api"
+AIRPORT  = "GOBD"
+
+# Phase 1 : 2024-05-13 -> 2024-08-31
+# Phase 2 : 2024-09-01 -> 2024-12-31
+# Phase 3 : 2025-01-01 -> 2026-05-13
+
+# Retained raw fields (15)
+FIELDS = ["fr24_id", "flight", "callsign", "operating_as",
+          "painted_as", "type", "reg",
+          "orig_icao", "orig_iata", "dest_icao", "dest_iata",
+          "datetime_takeoff", "datetime_landed",
+          "flight_ended", "collection_date"]
+
+# Merge and de-duplicate across the three collection phases
+frames = [pd.read_csv(f) for f in phase_files]
+historical = pd.concat(frames, ignore_index=True)
+historical = historical.drop_duplicates()
+historical.to_csv("data/raw/historical_arrivals_full.csv", index=False)
+# -> 50,385 records
+\end{lstlisting}
+
+Together, Appendices A to D document the complete evidential basis of the thesis: the implemented simulation model and its scenario outputs (Appendix A), the analytical and forecasting results derived from the validated dataset (Appendix B), the full numerical tables underlying those results (Appendix C), and the implementation logic required to reproduce them (Appendix D). The manager-facing decision-support environment itself is presented in \Cref{sec:decision-support-system}. Read together with the notebooks, datasets, model files, and dashboard file held in the project repository, they are intended to permit independent verification of every result reported in Chapters 4 and 5.

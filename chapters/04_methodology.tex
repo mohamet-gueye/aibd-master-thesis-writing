@@ -16,7 +16,7 @@ This raw archive contains both arrivals and departures at GOBD. The master data-
 
 \begin{table}[htbp]
     \centering
-    \caption{Record counts through the data validation and passenger-filtering pipeline (\texttt{notebooks/preprocessing/02\_data\_validation.ipynb}).}
+    \caption[Record counts through the data-validation pipeline]{Record counts through the data validation and passenger-filtering pipeline (\texttt{notebooks/preprocessing/02\_data\_validation.ipynb}).}
     \label{tab:data-validation-pipeline}
 
     \renewcommand{\arraystretch}{1.25}
@@ -86,7 +86,7 @@ Second, because \texttt{estimated\_passengers} is the product of a twelve-entry 
 
 \begin{table}[htbp]
     \centering
-    \caption{Assumed seat capacity by aircraft type used for passenger estimation (\texttt{notebooks/preprocessing/02\_data\_validation.ipynb}).}
+    \caption[Assumed seat capacity by aircraft type]{Assumed seat capacity by aircraft type used for passenger estimation (\texttt{notebooks/preprocessing/02\_data\_validation.ipynb}).}
     \label{tab:aircraft-seat-capacity}
 
     \renewcommand{\arraystretch}{1.25}
@@ -230,7 +230,7 @@ applied consistently in the Python analytics and in the dashboard layer.
 
 \begin{table}[htbp]
     \centering
-    \caption{Passenger- and baggage-pressure classification rules applied to hourly aggregated demand}
+    \caption[Passenger- and baggage-pressure classification rules]{Passenger- and baggage-pressure classification rules applied to hourly aggregated demand}
     \label{tab:pressure-classification-rules}
 
     \renewcommand{\arraystretch}{1.25}
@@ -378,7 +378,7 @@ determination ($R^2$). Results are reported in
 
 \begin{table}[htbp]
     \centering
-    \caption{Regression performance for future passenger-pressure forecasting on the held-out test set (n = 3,982)}
+    \caption[Passenger-pressure regression performance]{Regression performance for future passenger-pressure forecasting on the held-out test set ($n = 3{,}982$).}
     \label{tab:regression-performance}
 
     \renewcommand{\arraystretch}{1.25}
@@ -470,7 +470,7 @@ When trained on the full 385-feature set, which retained \nolinkurl{future_bagga
 \begin{table}[htbp]
   \centering
   \renewcommand{\arraystretch}{1.25}
-  \caption{Full-feature congestion classifiers on the held-out test set (n = 3,982); \texttt{future\_baggage\_pressure} retained as a predictor.}
+  \caption[Full-feature congestion-classifier performance]{Full-feature congestion classifiers on the held-out test set ($n = 3{,}982$); \texttt{future\_baggage\_pressure} retained as a predictor.}
   \label{tab:full-feature-congestion-classifiers}
   \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|}
     \hline
@@ -489,31 +489,27 @@ When trained on the full 385-feature set, which retained \nolinkurl{future_bagga
 
 Figure 4.1 shows the top 15 classification features for the full-feature Random Forest model; the dominance of \nolinkurl{future_baggage_pressure}, with an importance of approximately 0.60, roughly ten times that of the next-ranked predictor (\nolinkurl{arrival_hour}), directly identifies it as the source of the leakage described above. Figures B.8 and B.9 in Appendix B show the corresponding confusion matrix and ROC curve for the full-feature Random Forest classifier, which achieved near-total separation between classes (ROC-AUC = 1.0000) as a direct consequence of this leakage rather than as evidence of genuine forecasting skill.
 
-% ---------------------------------------------------------------------------
-% FIGURE 4.1 -- ASSET NOT YET SUPPLIED.
-% Graphic required from notebooks/forecasting/06_congestion_classification.ipynb
-% (top 15 classification features, full-feature Random Forest congestion classifier).
-% Uncomment and insert the correct filename once the image file is added to
-% figures/chapter4/. Caption text below is verbatim from the finalized Word source.
-%
-% \begin{figure}[htbp]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
-%   \caption{Top 15 classification features for the full-feature Random Forest
-%   congestion classifier. The dominance of \texttt{future\_baggage\_pressure}
-%   (importance $\approx$ 0.60) identifies it as the source of the information
-%   leakage discussed above
-%   (\texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}).}
-%   \label{fig:full-feature-rf-classification-importance}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+  \centering
+  \captionsetup{justification=raggedright,singlelinecheck=false}
+  \includegraphics[
+    width=\textwidth,
+    keepaspectratio
+  ]{figures/chapter4/fig_4_1_full_feature_importance_leakage.png}
+  \caption[Full-feature Random Forest classification feature importance]{Top 15 classification features for the full-feature Random Forest
+  congestion classifier. The dominance of \texttt{future\_baggage\_pressure}
+  (importance $\approx$ 0.60) identifies it as the source of the information
+  leakage discussed above
+  (\nolinkurl{notebooks/forecasting/06_congestion_classification.ipynb}).}
+  \label{fig:full-feature-rf-classification-importance}
+\end{figure}
 
 To obtain a realistic estimate of operational forecasting capability, \nolinkurl{future_baggage_pressure} was removed, and the four classifiers were retrained on the resulting 384-feature reduced set, with the same stratified 80/20 split (\Cref{tab:reduced-feature-congestion-classifiers}).
 
 \begin{table}[htbp]
   \centering
   \renewcommand{\arraystretch}{1.25}
-  \caption{Reduced-feature congestion classifiers on the held-out test set (n = 3,982); \texttt{future\_baggage\_pressure} excluded.}
+  \caption[Reduced-feature congestion-classifier performance]{Reduced-feature congestion classifiers on the held-out test set ($n = 3{,}982$); \texttt{future\_baggage\_pressure} excluded.}
   \label{tab:reduced-feature-congestion-classifiers}
   \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|}
     \hline
@@ -532,24 +528,20 @@ To obtain a realistic estimate of operational forecasting capability, \nolinkurl
 
 Under this more realistic configuration, Reduced XGBoost achieved the highest ROC-AUC (0.7973), and Reduced LightGBM achieved the highest accuracy, F1 score, and a closely comparable ROC-AUC (0.7914). In contrast, Reduced Random Forest showed markedly lower recall (0.1926) than the boosting-based models. Because early detection of high-congestion periods was treated as operationally more important than avoidance of false alarms, recall and F1 score were weighted alongside ROC-AUC in selecting the deployed classifier; the Reduced LightGBM model was saved as the production congestion classifier (\path{models/reduced_lightgbm_congestion_classifier.pkl}). Figure B.10 in Appendix B shows the top 15 features for the reduced-feature Random Forest classifier after \nolinkurl{future_baggage_pressure} was removed; cyclical time-of-day features (\nolinkurl{hour_cos}, \nolinkurl{arrival_hour}, \nolinkurl{hour_sin}) and rolling/Lag operational indicators dominate, consistent with the averaged feature-importance analysis across the four reduced classifiers, which identified \nolinkurl{rolling_bags_mean_3}, \nolinkurl{rolling_mean_3}, \nolinkurl{week_of_year}, \nolinkurl{arrival_hour}, \nolinkurl{lag_1_passengers} and \nolinkurl{lag_3_passengers} as the most consistently influential predictors, mirroring the pattern found in the regression models. Figure 4.2 compares accuracy, recall, F1 score, and ROC-AUC across the full-feature and all four reduced-feature classifiers, illustrating the substantial performance gap attributable to the \nolinkurl{future_baggage_pressure} leakage variable.
 
-% ---------------------------------------------------------------------------
-% FIGURE 4.2 -- ASSET NOT YET SUPPLIED.
-% Graphic required from notebooks/forecasting/06_congestion_classification.ipynb
-% (accuracy, recall, F1 and ROC-AUC: full-feature RF vs four reduced-feature classifiers).
-% Uncomment and insert the correct filename once the image file is added to
-% figures/chapter4/. Caption text below is verbatim from the finalized Word source.
-%
-% \begin{figure}[htbp]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
-%   \caption{Accuracy, recall, F1 score, and ROC-AUC for the full-feature Random
-%   Forest classifier compared with the four reduced-feature classifiers,
-%   corresponding to \Cref{tab:full-feature-congestion-classifiers} and
-%   \Cref{tab:reduced-feature-congestion-classifiers}
-%   (\texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}).}
-%   \label{fig:classifier-metric-comparison}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+  \centering
+  \captionsetup{justification=raggedright,singlelinecheck=false}
+  \includegraphics[
+    width=\textwidth,
+    keepaspectratio
+  ]{figures/chapter4/fig_4_2_classifier_performance_comparison.png}
+  \caption[Full-feature and reduced-feature classifier performance]{Accuracy, recall, F1 score, and ROC-AUC for the full-feature Random
+  Forest classifier compared with the four reduced-feature classifiers,
+  corresponding to \Cref{tab:full-feature-congestion-classifiers} and
+  \Cref{tab:reduced-feature-congestion-classifiers}
+  (\nolinkurl{notebooks/forecasting/06_congestion_classification.ipynb}).}
+  \label{fig:classifier-metric-comparison}
+\end{figure}
 
 A SHAP (SHapley Additive exPlanations) analysis \parencite{lundberg2017unified} was additionally performed on the reduced XGBoost classifier using \texttt{shap.TreeExplainer}, which computes exact Shapley values for tree ensembles. As shown in the SHAP summary plot in Figure B.13 of Appendix B, \nolinkurl{hour_cos} and \nolinkurl{arrival_hour} contributed most to the predicted congestion probability, with congestion probability rising markedly during peak arrival windows, particularly the evening period, and falling during midday and overnight periods. Rolling and lagged passenger/baggage variables contributed consistently across observations, corroborating the feature-importance ranking and indicating that the classifiers learned temporally coherent, operationally interpretable congestion dynamics rather than arbitrary statistical associations.
 
@@ -576,7 +568,7 @@ The simulation was driven by six structured input tables prepared in \path{noteb
 
 \begin{table}[H]
     \centering
-    \caption{Operational-period lookup table used to drive time-varying processing rate and congestion-risk weighting in the AnyLogic model (\texttt{data/\allowbreak processed/\allowbreak anylogic/\allowbreak anylogic\_operational\_periods.csv}).}
+    \caption[AnyLogic operational-period lookup table]{Operational-period lookup table used to drive time-varying processing rate and congestion-risk weighting in the AnyLogic model (\texttt{data/processed/anylogic/anylogic\_operational\_periods.csv}).}
     \label{tab:anylogic-operational-periods}
 
     \renewcommand{\arraystretch}{1.25}
@@ -636,7 +628,7 @@ The scenario-parameter table defines five configurable multiplier profiles appli
 
 \begin{table}[H]
     \centering
-    \caption{AnyLogic scenario-parameter configuration table
+    \caption[AnyLogic scenario-parameter configuration]{AnyLogic scenario-parameter configuration table
     (\texttt{data/\allowbreak processed/\allowbreak anylogic/\allowbreak
     anylogic\_scenario\_parameters.csv}).}
     \label{tab:anylogic-scenario-parameters}
@@ -726,47 +718,29 @@ Within the model, passengers are generated according to the time-indexed arrival
 
 Figure A.2 in Appendix A presents the corresponding process layout as implemented in the AnyLogic model editor, showing the dual immigration-counter blocks, the four baggage-reclaim carousels, the customs decision branch, and the exit corridor. Figure A.3 shows the resulting three-dimensional visualization generated by the model during a simulation run, with passenger agents moving through the immigration and baggage-reclaim areas, and Figure 4.3 summarises this same five-zone process chain as a simplified block-level architecture diagram, distinguishing source/exit, queue, processing, and decision blocks.
 
-% ---------------------------------------------------------------------------
-% FIGURE 4.3 -- ASSET NOT YET SUPPLIED.
-% Graphic required from notebooks/analytics/09_thesis_visualizations.ipynb
-% (block-level architecture of the passenger arrival flow).
-% Uncomment and insert the correct filename once the image file is added to
-% figures/chapter4/. Caption below is verbatim from the finalized Word source.
-% When activated, change the in-text "Figure 4.3" above to
-% \Cref{fig:anylogic-passenger-flow-architecture}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
-%   \caption{Block-level architecture of the passenger arrival flow implemented
-%   in the AnyLogic model: source, queue, processing, and decision blocks across
-%   the five process stages
-%   (\texttt{notebooks/analytics/09\_thesis\_visualizations.ipynb}).}
-%   \label{fig:anylogic-passenger-flow-architecture}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[H]
+    \centering
+    \includegraphics[
+        width=\textwidth,
+        height=0.78\textheight,
+        keepaspectratio
+    ]{figures/chapter4/fig_4_3_passenger_flow_architecture.png}
+    \caption[AnyLogic passenger arrival flow architecture]{Passenger arrival flow architecture implemented in the AnyLogic simulation model. The discrete-event model represents the passenger arrival journey at AIBD through five operational stages: arrival generation, immigration control, baggage reclaim, customs inspection, and passenger exit. Within these stages, queue accumulation, congestion propagation, and throughput performance are dynamically evaluated. Source: AnyLogic simulation model developed for this study.}
+    \label{fig:chapter4-passenger-flow-architecture}
+\end{figure}
 
 Six named scenarios were executed and compared, consistent with the project's experiment log and the scenario-comparison page of the Power BI dashboard (Section 4.6): Scenario 00 (Baseline), representing current estimated operating conditions with default staffing and standard baggage processing; Scenario A (Immigration Optimization), representing increased immigration-processing capacity; Scenario B (Baggage Optimization), representing increased baggage-reclaim capacity; Scenario C (Peak Stress Test), representing overlapping international arrival waves (modelled on concurrent Dubai, Istanbul and Paris arrivals) with increased arrival rate, baggage demand and customs-inspection probability; Scenario D (Dynamic Intervention), implementing an adaptive rule that increases baggage-processing capacity in response to observed queue conditions during the simulation (in the form \texttt{if baggageQueue.size() $>$ 50: baggageCapacityMultiplier = 1.5}); and Scenario E (Integrated Optimization), combining immigration optimisation, baggage optimisation and the adaptive intervention logic within a single configuration. Figure 4.4 illustrates the decision logic of the Scenario D dynamic-intervention mechanism: real-time queue monitoring and threshold evaluation determine whether to activate additional operational capacity or maintain baseline resources. Model files for the Baseline and Scenarios A-D are maintained as separate AnyLogic projects (\path{models/AIBD_ArrivalFlow_v1/AIBD_ArrivalFlow_v1_BASELINE}, \nolinkurl{_Scenario_A}, \nolinkurl{_Scenario_B}, \nolinkurl{_Scenario_C}, \nolinkurl{_Scenario_D}); Scenario E is reported as an additional configuration within the same modeling framework.
 
-% ---------------------------------------------------------------------------
-% FIGURE 4.4 -- ASSET NOT YET SUPPLIED.
-% Graphic required from notebooks/analytics/09_thesis_visualizations.ipynb
-% (decision logic of the Scenario D dynamic-intervention mechanism).
-% Uncomment and insert the correct filename once the image file is added to
-% figures/chapter4/. Caption below is verbatim from the finalized Word source.
-% When activated, change the in-text "Figure 4.4" above to
-% \Cref{fig:dynamic-intervention-logic}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
-%   \caption{Decision logic of the dynamic-intervention mechanism implemented in
-%   Scenario D: real-time queue monitoring, threshold evaluation, and conditional
-%   activation of additional operational capacity
-%   (\texttt{notebooks/analytics/09\_thesis\_visualizations.ipynb}).}
-%   \label{fig:dynamic-intervention-logic}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[H]
+    \centering
+    \includegraphics[
+        width=\textwidth,
+        height=0.78\textheight,
+        keepaspectratio
+    ]{figures/chapter4/fig_4_4_dynamic_intervention_framework.png}
+    \caption[Dynamic intervention framework for congestion management]{Dynamic intervention framework for adaptive airport congestion management. Real-time queue monitoring is followed by threshold evaluation; when congestion is detected, additional operational capacity is activated, whereas under normal conditions baseline resources are maintained. Both pathways are intended to improve passenger-flow performance. Source: AnyLogic simulation model developed for this study.}
+    \label{fig:chapter4-dynamic-intervention-framework}
+\end{figure}
 
 Each scenario was evaluated using the common set of KPIs described in Section 4.5, exported to \path{scenario_kpi_results.csv}, and used consistently in the machine-learning-derived congestion classification, the AnyLogic simulation outputs, and the Power BI dashboard, so that predicted pressure, simulated operational consequences, and dashboard-based decision support all refer to the same underlying operational definitions.
 
@@ -780,7 +754,7 @@ The AnyLogic KPI reference table (\path{anylogic_kpi_definitions.csv}, \Cref{tab
 \begin{table}[H]
   \centering
   \renewcommand{\arraystretch}{1.25}
-  \caption{AnyLogic KPI definition table (\texttt{data/\allowbreak processed/\allowbreak anylogic/\allowbreak anylogic\_kpi\_definitions.csv}).}
+  \caption[AnyLogic KPI definitions]{AnyLogic KPI definition table (\texttt{data/\allowbreak processed/\allowbreak anylogic/\allowbreak anylogic\_kpi\_definitions.csv}).}
   \label{tab:anylogic-kpi-definitions}
   \begin{tabularx}{\textwidth}{|l|X|l|}
     \hline
@@ -821,135 +795,80 @@ The final methodological component is a Power BI Decision Support System (\path{
 
 The Operational Overview page, shown in Figure 4.5, presents four headline KPI cards (Generated Passengers, Exited Passengers, Average System Time and Resilience Score), an Hourly Passenger Pressure Forecast line chart with the 160-passenger operational threshold (\Cref{subsec:pressure-classification}) displayed as a reference line, an Hourly Baggage Processing Demand column chart, an Operational Congestion Distribution donut chart summarising the proportion of Low/Moderate/High pressure periods, and a text-based Operational Alerts panel that surfaces conditions such as the timing of peak congestion windows and the resilience level of the currently selected scenario.
 
-% ---------------------------------------------------------------------------
-% FIGURE 4.5 -- ASSET NOT YET SUPPLIED.
-% Required screenshot from dashboards/powerbi/aibd_arrival_operations_dss.pbix
-% (Operational Overview page). Suggested destination: figures/chapter4/
-% Uncomment after the exact screenshot asset is added.
-% When activated, change the in-text "Figure 4.5" above to
-% \Cref{fig:powerbi-operational-overview}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
-%   \caption{Power BI Decision Support System: Operational Overview page, Passenger
-%   showing headline KPI cards, the hourly passenger-pressure forecast with the
-%   160-passenger threshold reference line, hourly baggage demand, and the
-%   operational-alerts panel
-%   (\texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}).}
-%   \label{fig:powerbi-operational-overview}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \includegraphics[
+        width=\textwidth,
+        keepaspectratio
+    ]{figures/chapter4/fig_4_5_dss_operational_overview.png}
+    \caption[Power BI Operational Overview]{Power BI Decision Support System: Operational Overview page, showing headline KPI cards, the hourly passenger-pressure forecast with the 160-passenger threshold reference line, hourly baggage demand, and the operational-alerts panel (\nolinkurl{dashboards/powerbi/aibd_arrival_operations_dss.pbix}).}
+    \label{fig:powerbi-operational-overview}
+\end{figure}
 
 \subsection{Scenario Comparison}
 \label{subsec:powerbi-scenario-comparison}
 
 The Scenario Comparison page, titled ``AIBD Operational Intelligence Platform: Simulation Scenario Comparison Dashboard'' and shown in Figure 4.6, presents KPI cards for best throughput, lowest queue and resilience score, a Passenger Throughput by Operational Scenario bar chart, a Queue Length by Operational Scenario bar chart, and an Operational Scenario Ranking and Recommendation Matrix table that ranks the six scenarios of \Cref{subsec:simulation-architecture-scenarios} by throughput, queue size, system time and resilience score, and assigns each a qualitative risk level (Moderate, High or Critical) and recommendation status (Recommended, Acceptable or Not Recommended). The underlying data source for this page is \path{scenario_kpi_results.csv}.
 
-% ---------------------------------------------------------------------------
-% FIGURE 4.6 -- ASSET NOT YET SUPPLIED.
-% Required screenshot from dashboards/powerbi/aibd_arrival_operations_dss.pbix
-% (Scenario Comparison page). Suggested destination: figures/chapter4/
-% Uncomment after the exact screenshot asset is added.
-% When activated, change the in-text "Figure 4.6" above to
-% \Cref{fig:powerbi-scenario-comparison}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
-%   \caption{Power BI Decision Support System: Scenario Comparison page.
-%   Displays KPI cards for best throughput, lowest queue and resilience score;
-%   passenger throughput and queue length by operational scenario; and the
-%   Operational Scenario Ranking and Recommendation Matrix, which assigns each
-%   scenario a qualitative risk level (Moderate, High or Critical) and a
-%   recommendation status (Recommended, Acceptable or Not Recommended).
-%   Underlying data source: \texttt{scenario\_kpi\_results.csv} (Table C.12);
-%   \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}.}
-%   \label{fig:powerbi-scenario-comparison}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \includegraphics[
+        width=\textwidth,
+        keepaspectratio
+    ]{figures/chapter4/fig_4_6_dss_scenario_comparison.png}
+    \caption[Power BI Scenario Comparison]{Power BI Decision Support System: Scenario Comparison page. Displays KPI cards for best throughput, lowest queue and resilience score; passenger throughput and queue length by operational scenario; and the Operational Scenario Ranking and Recommendation Matrix, which assigns each scenario a qualitative risk level (Moderate, High or Critical) and a recommendation status (Recommended, Acceptable or Not Recommended). Underlying data source: \nolinkurl{scenario_kpi_results.csv} (Table C.12); \nolinkurl{dashboards/powerbi/aibd_arrival_operations_dss.pbix}.}
+    \label{fig:powerbi-scenario-comparison}
+\end{figure}
 
 \subsection{Dynamic Intervention Monitoring}
 \label{subsec:powerbi-dynamic-intervention}
 
-The Dynamic Intervention Monitoring page, shown in Figure 4.7, presents the core real-time-style decision-support functionality of the system, built primarily around Scenario D. It displays KPI cards for overall risk status, passenger peak, baggage peak and capacity-response status; repeats the Hourly Passenger Pressure Forecast and a Real-Time Baggage Processing Monitoring chart; and presents an Operational Alert Summary panel together with an extended version of the scenario ranking and recommendation matrix that includes delay (minutes), queue size and resilience percentage by scenario. This page operationalizes the dynamic-intervention logic described in \Cref{subsec:simulation-architecture-scenarios} (Figure 5.3) by connecting predicted and simulated pressure directly to threshold-based operational alerts.
+The Dynamic Intervention Monitoring page, shown in \Cref{fig:powerbi-dynamic-intervention}, presents the core real-time-style decision-support functionality of the system, built primarily around Scenario D. It displays KPI cards for overall risk status, passenger peak, baggage peak and capacity-response status; repeats the Hourly Passenger Pressure Forecast and a Real-Time Baggage Processing Monitoring chart; and presents an Operational Alert Summary panel together with an extended version of the scenario ranking and recommendation matrix that includes delay (minutes), queue size and resilience percentage by scenario. This page operationalizes the dynamic-intervention logic described in \Cref{subsec:simulation-architecture-scenarios} (Figure 5.3) by connecting predicted and simulated pressure directly to threshold-based operational alerts.
 
-% ---------------------------------------------------------------------------
-% FIGURE 4.7 -- ASSET NOT YET SUPPLIED.
-% Required screenshot from dashboards/powerbi/aibd_arrival_operations_dss.pbix
-% (Dynamic Intervention Monitoring page). Suggested destination: figures/chapter4/
-% Uncomment after the exact screenshot asset is added.
-% When activated, change the in-text "Figure 4.7" above to
-% \Cref{fig:powerbi-dynamic-intervention}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
-%   \caption{Power BI Decision Support System: Dynamic Intervention Monitoring
-%   page. Displays KPI cards for overall risk status, passenger peak, baggage
-%   peak and capacity-response status; the hourly passenger-pressure forecast
-%   and real-time baggage-processing monitoring charts; an operational alert
-%   summary; and an extended scenario ranking matrix reporting delay in minutes,
-%   queue size and resilience percentage by scenario. This page operationalizes
-%   the Scenario D intervention logic of Code D.7;
-%   \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}.}
-%   \label{fig:powerbi-dynamic-intervention}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \includegraphics[
+        width=\textwidth,
+        keepaspectratio
+    ]{figures/chapter4/fig_4_7_dss_dynamic_intervention_monitoring.png}
+    \caption[Power BI Dynamic Intervention Monitoring]{Power BI Decision Support System: Dynamic Intervention Monitoring Dashboard. Displays real-time risk status, passenger and baggage peak indicators, capacity-response status, hourly passenger-pressure forecast, real-time baggage processing monitoring, operational alert summary, and the Operational Scenario Ranking and Recommendation Matrix (\nolinkurl{dashboards/powerbi/aibd_arrival_operations_dss.pbix}).}
+    \label{fig:powerbi-dynamic-intervention}
+\end{figure}
 
 \subsection{Executive Decision Support Center}
 \label{subsec:powerbi-executive-dss}
 
-The Executive Decision Support Center, shown in Figure 4.8, consolidates the scenario-comparison evidence into a management-oriented summary: KPI cards identifying the best-performing scenario, its resilience score, the lowest queue value and the current executive risk level; a Recommended Operational Strategy text panel; a Scenario Ranking table (rank, scenario, resilience percentage, recommendation); an Operational Risk Distribution donut chart categorising scenarios as Critical, High or Moderate risk; and an Airport DSS Conclusions panel listing key findings, for example, the concentration of peak passenger congestion between 05:00--06:00 and 20:00--21:00, and the recommendation to apply proactive staffing and baggage-resource allocation during those windows.
+The Executive Decision Support Center, shown in \Cref{fig:powerbi-executive-summary}, consolidates the scenario-comparison evidence into a management-oriented summary: KPI cards identifying the best-performing scenario, its resilience score, the lowest queue value and the current executive risk level; a Recommended Operational Strategy text panel; a Scenario Ranking table (rank, scenario, resilience percentage, recommendation); an Operational Risk Distribution donut chart categorising scenarios as Critical, High or Moderate risk; and an Airport DSS Conclusions panel listing key findings, for example, the concentration of peak passenger congestion between 05:00--06:00 and 20:00--21:00, and the recommendation to apply proactive staffing and baggage-resource allocation during those windows.
 
-% ---------------------------------------------------------------------------
-% FIGURE 4.8 -- ASSET NOT YET SUPPLIED.
-% Required screenshot from dashboards/powerbi/aibd_arrival_operations_dss.pbix
-% (Executive Decision Support Center page). Suggested destination: figures/chapter4/
-% Uncomment after the exact screenshot asset is added.
-% When activated, change the in-text "Figure 4.8" above to
-% \Cref{fig:powerbi-executive-dss}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
-%   \caption{Power BI Decision Support System: Executive Decision Support
-%   Center. Displays KPI cards identifying the best-performing scenario, its
-%   resilience score, the lowest queue value and the current executive risk
-%   level; a recommended operational strategy panel; a scenario ranking table;
-%   an operational risk-distribution chart; and an Airport DSS Conclusions panel
-%   reporting the concentration of peak passenger congestion between 05:00 and
-%   06:00 and between 20:00 and 21:00;
-%   \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}.}
-%   \label{fig:powerbi-executive-dss}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \includegraphics[
+        width=\textwidth,
+        keepaspectratio
+    ]{figures/chapter4/fig_4_8_dss_executive_decision_center.png}
+    \caption[Power BI Executive Decision Support Center]{Power BI Decision Support System: Executive Decision Support Center / Executive Summary KPIs page. Presents the recommended operational strategy, best scenario, best resilience score, lowest queue, executive risk level, scenario-ranking table, operational risk distribution, and final DSS conclusions. Underlying scenario results derive from \nolinkurl{scenario_kpi_results.csv} and are implemented in \nolinkurl{dashboards/powerbi/aibd_arrival_operations_dss.pbix}.}
+    \label{fig:powerbi-executive-summary}
+\end{figure}
 
 \subsection{Operational Intelligence Insights}
 \label{subsec:powerbi-operational-intelligence}
 
-The Operational Intelligence Insights page, shown in Figure 4.9, uses Power BI's native Key Influencers visual to identify which operational conditions most increase the likelihood that congestion risk is ``High''. The analysis identifies Passengers Pressure Level being High as the strongest single influencer (a $3.17\times$ increase in the likelihood of high congestion risk), followed by the arrival hour falling between 19:00 and 21:00 ($3.02\times$), Baggage Pressure Level being High ($2.23\times$), the arrival hour being 06:00 or earlier ($1.48\times$), the arrival month falling between May and September ($1.35\times$. The arrival day being Thursday ($1.23\times$). These influence scores, together with an accompanying Top Segments view, a Key Findings panel, and an Operational Recommendations panel (for example, increasing staffing during the 19:00--21:00 peak and activating baggage balancing when baggage pressure is High), provide the explanatory layer of the Decision Support System, connecting the statistical predictors identified in \Cref{sec:forecasting-models} to concrete, manager-facing operational guidance.
+The Operational Intelligence Insights page, shown in \Cref{fig:powerbi-operational-intelligence}, uses Power BI's native Key Influencers visual to identify which operational conditions most increase the likelihood that congestion risk is ``High''. The analysis identifies Passengers Pressure Level being High as the strongest single influencer (a $3.17\times$ increase in the likelihood of high congestion risk), followed by the arrival hour falling between 19:00 and 21:00 ($3.02\times$), Baggage Pressure Level being High ($2.23\times$), the arrival hour being 06:00 or earlier ($1.48\times$), the arrival month falling between May and September ($1.35\times$. The arrival day being Thursday ($1.23\times$). These influence scores, together with an accompanying Top Segments view, a Key Findings panel, and an Operational Recommendations panel (for example, increasing staffing during the 19:00--21:00 peak and activating baggage balancing when baggage pressure is High), provide the explanatory layer of the Decision Support System, connecting the statistical predictors identified in \Cref{sec:forecasting-models} to concrete, manager-facing operational guidance.
 
-% ---------------------------------------------------------------------------
-% FIGURE 4.9 -- ASSET NOT YET SUPPLIED.
-% Required screenshot from dashboards/powerbi/aibd_arrival_operations_dss.pbix
-% (Operational Intelligence Insights page). Suggested destination: figures/chapter4/
-% Uncomment after the exact screenshot asset is added.
-% When activated, change the in-text "Figure 4.9" above to
-% \Cref{fig:powerbi-operational-intelligence}.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=\textwidth]{figures/chapter4/<FILENAME>}
-%   \caption{Power BI Decision Support System: Operational Intelligence Insights
-%   page. Displays the Key Influencers analysis of high congestion risk
-%   reproduced in Table C.15, together with a top-segments view, a key-findings
-%   panel and an operational-recommendations panel. This page provides the
-%   explanatory layer of the Decision Support System;
-%   \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}.}
-%   \label{fig:powerbi-operational-intelligence}
-% \end{figure}
-% ---------------------------------------------------------------------------
+\begin{figure}[htbp]
+    \centering
+    \captionsetup{justification=raggedright,singlelinecheck=false}
+    \includegraphics[
+        width=\textwidth,
+        keepaspectratio
+    ]{figures/chapter4/fig_4_9_dss_operational_intelligence_insights.png}
+    \caption[Power BI Operational Intelligence Insights]{Power BI Decision Support System: Operational Intelligence Insights page. Combines the Power BI Key Influencers visual for congestion risk with an interpretation panel of key findings and operational recommendations. The influence results shown here are the basis of the ranked factors later reported in Table C.15 (\nolinkurl{dashboards/powerbi/aibd_arrival_operations_dss.pbix}).}
+    \label{fig:powerbi-operational-intelligence}
+\end{figure}
 
 \subsection{Data integration and consistency}
 \label{subsec:powerbi-data-integration}

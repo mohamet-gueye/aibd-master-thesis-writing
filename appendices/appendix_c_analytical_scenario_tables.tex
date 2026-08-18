@@ -5,7 +5,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 
 \begin{table}[H]
     \centering
-    \caption{Record counts through the data validation and passenger-filtering pipeline. Source: \texttt{notebooks/preprocessing/02\_data\_validation.ipynb}. Reproduced from Chapter 4, Table 4.1.}
+    \caption[Record counts through the validation pipeline]{Record counts through the data validation and passenger-filtering pipeline. Source: \texttt{notebooks/preprocessing/02\_data\_validation.ipynb}. Reproduced from Chapter 4, Table 4.1.}
     \label{tab:appendix-c-validation-pipeline}
     \small
     \setlength{\tabcolsep}{5pt}
@@ -33,7 +33,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 
 \begin{table}[H]
     \centering
-    \caption{Assumed seat capacity by aircraft type used for passenger estimation. Source: \texttt{notebooks/preprocessing/02\_data\_validation.ipynb}. Reproduced from Chapter 4, Table 4.2.}
+    \caption[Assumed seat capacity by aircraft type]{Assumed seat capacity by aircraft type used for passenger estimation. Source: \texttt{notebooks/preprocessing/02\_data\_validation.ipynb}. Reproduced from Chapter 4, Table 4.2.}
     \label{tab:appendix-c-seat-capacity}
     \small
     \setlength{\tabcolsep}{5pt}
@@ -66,7 +66,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Passenger- and baggage-pressure classification rules applied to hourly aggregated demand. Source: \texttt{notebooks/analytics/03\_passenger\_pressure\_analysis.ipynb}. Reproduced from Chapter 4, Table 4.3. Implementation given in Code D.3 and Code D.4.}
+    \caption[Passenger- and baggage-pressure classification rules]{Passenger- and baggage-pressure classification rules applied to hourly aggregated demand. Source: \texttt{notebooks/analytics/03\_passenger\_pressure\_analysis.ipynb}. Reproduced from Chapter 4, Table 4.3. Implementation given in Code D.3 and Code D.4.}
     \label{tab:appendix-c-pressure-rules}
     \small
     \setlength{\tabcolsep}{5pt}
@@ -101,7 +101,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Complete hourly passenger-pressure profile with classification band. Source: \texttt{data/simulation/hourly\_passenger\_pressure.csv}. Summarised in \Cref{sec:analytics} (Figure 5.1) and shown in fully annotated form in \Cref{fig:appendix-b-passenger-pressure-timeline}.}
+    \caption[Complete hourly passenger-pressure profile]{Complete hourly passenger-pressure profile with classification band. Source: \texttt{data/simulation/hourly\_passenger\_pressure.csv}. Summarised in \Cref{sec:analytics} (Figure 5.1) and shown in fully annotated form in \Cref{fig:appendix-b-passenger-pressure-timeline}.}
     \label{tab:appendix-c-hourly-passenger-pressure}
     \footnotesize
     \setlength{\tabcolsep}{3pt}
@@ -147,7 +147,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Complete hourly baggage-pressure profile with classification band. Source: \texttt{data/simulation/hourly\_baggage\_pressure.csv}. Summarised in \Cref{fig:appendix-b-baggage-pressure-timeline}.}
+    \caption[Complete hourly baggage-pressure profile]{Complete hourly baggage-pressure profile with classification band. Source: \texttt{data/simulation/hourly\_baggage\_pressure.csv}. Summarised in \Cref{fig:appendix-b-baggage-pressure-timeline}.}
     \label{tab:appendix-c-hourly-baggage-pressure}
     \footnotesize
     \setlength{\tabcolsep}{3pt}
@@ -193,7 +193,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Regression performance for future passenger-pressure forecasting on the held-out test set ($n = 3{,}982$). Source: \texttt{notebooks/forecasting/05\_predictive\_modeling\_and\_forecasting.ipynb}. Reproduced from Chapter 4, Table 4.4.}
+    \caption[Passenger-pressure regression performance]{Regression performance for future passenger-pressure forecasting on the held-out test set ($n = 3{,}982$). Source: \texttt{notebooks/forecasting/05\_predictive\_modeling\_and\_forecasting.ipynb}. Reproduced from Chapter 4, Table 4.4.}
     \label{tab:appendix-c-regression-performance}
     \small
     \setlength{\tabcolsep}{5pt}
@@ -224,7 +224,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Full-feature congestion classifiers on the held-out test set ($n = 3{,}982$), with \texttt{future\_baggage\_pressure} retained as a predictor. These values are affected by information leakage and are reported for methodological transparency, not as deployable performance. Source: \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}. Reproduced from Chapter 4, Table 4.5.}
+    \caption[Full-feature congestion-classifier performance]{Full-feature congestion classifiers on the held-out test set ($n = 3{,}982$), with \texttt{future\_baggage\_pressure} retained as a predictor. These values are affected by information leakage and are reported for methodological transparency, not as deployable performance. Source: \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}. Reproduced from Chapter 4, Table 4.5.}
     \label{tab:appendix-c-full-feature-classifiers}
     \footnotesize
     \setlength{\tabcolsep}{3pt}
@@ -259,7 +259,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Reduced-feature congestion classifiers on the held-out test set ($n = 3{,}982$), with \texttt{future\_baggage\_pressure} excluded. These are the operationally valid results. Source: \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}. Reproduced from Chapter 4, Table 4.6.}
+    \caption[Reduced-feature congestion-classifier performance]{Reduced-feature congestion classifiers on the held-out test set ($n = 3{,}982$), with \texttt{future\_baggage\_pressure} excluded. These are the operationally valid results. Source: \texttt{notebooks/forecasting/06\_congestion\_classification.ipynb}. Reproduced from Chapter 4, Table 4.6.}
     \label{tab:appendix-c-reduced-feature-classifiers}
     \footnotesize
     \setlength{\tabcolsep}{3pt}
@@ -294,7 +294,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Operational-period lookup table driving time-varying processing rate and congestion-risk weighting in the AnyLogic model. Source: \texttt{data/processed/anylogic/anylogic\_operational\_periods.csv}. Reproduced from \Cref{tab:anylogic-operational-periods}.}
+    \caption[AnyLogic operational-period lookup table]{Operational-period lookup table driving time-varying processing rate and congestion-risk weighting in the AnyLogic model. Source: \texttt{data/processed/anylogic/anylogic\_operational\_periods.csv}. Reproduced from \Cref{tab:anylogic-operational-periods}.}
     \label{tab:appendix-c-operational-periods}
     \small
     \setlength{\tabcolsep}{4pt}
@@ -327,7 +327,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[!htbp]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{AnyLogic scenario-parameter configuration table. Source: \texttt{data/processed/anylogic/anylogic\_scenario\_parameters.csv}. Reproduced from \Cref{tab:anylogic-scenario-parameters}. This five-row configuration schema maps conceptually, but not one-to-one, onto the six executed scenarios documented in \Cref{tab:appendix-c-executed-scenario-config}.}
+    \caption[AnyLogic scenario-parameter configuration]{AnyLogic scenario-parameter configuration table. Source: \texttt{data/processed/anylogic/anylogic\_scenario\_parameters.csv}. Reproduced from \Cref{tab:anylogic-scenario-parameters}. This five-row configuration schema maps conceptually, but not one-to-one, onto the six executed scenarios documented in \Cref{tab:appendix-c-executed-scenario-config}.}
     \label{tab:appendix-c-scenario-parameter-schema}
     \footnotesize
     \setlength{\tabcolsep}{2.5pt}
@@ -372,7 +372,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Scenario-specific AnyLogic configuration parameters as executed. Source: Simulation Results Consolidation and Scientific Interpretation; Simulation Results and Discussion. Reproduced from \Cref{tab:simulation-scenario-config-executed}. All scenarios were run over a 720-minute (12-hour) horizon.}
+    \caption[Executed AnyLogic scenario configurations]{Scenario-specific AnyLogic configuration parameters as executed. Source: Simulation Results Consolidation and Scientific Interpretation; Simulation Results and Discussion. Reproduced from \Cref{tab:simulation-scenario-config-executed}. All scenarios were run over a 720-minute (12-hour) horizon.}
     \label{tab:appendix-c-executed-scenario-config}
     \footnotesize
     \setlength{\tabcolsep}{2.5pt}
@@ -417,7 +417,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Complete KPI comparison across the six simulation scenarios. Source: \texttt{data/simulation/scenario\_kpi\_results.csv}; Simulation Results Consolidation and Scientific Interpretation. Reproduced from \Cref{tab:simulation-kpi-results}. The congestion-severity flag reported by the simulation model is uniformly CRITICAL across all six scenarios and does not correspond to the graded \nolinkurl{Risk_Level} classification used in the Power BI dashboard, as noted in \Cref{sec:conclusion-limitations}.}
+    \caption[Simulation KPI comparison across six scenarios]{Complete KPI comparison across the six simulation scenarios. Source: \texttt{data/simulation/scenario\_kpi\_results.csv}; Simulation Results Consolidation and Scientific Interpretation. Reproduced from \Cref{tab:simulation-kpi-results}. The congestion-severity flag reported by the simulation model is uniformly CRITICAL across all six scenarios and does not correspond to the graded \nolinkurl{Risk_Level} classification used in the Power BI dashboard, as noted in \Cref{sec:conclusion-limitations}.}
     \label{tab:appendix-c-simulation-kpi-comparison}
     \footnotesize
     \setlength{\tabcolsep}{3pt}
@@ -471,7 +471,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Normalized Scenario performance scores. Source: \texttt{notebooks/visualization/09\_thesis\_visualizations.ipynb}. Visualized in \Cref{fig:appendix-a-scenario-performance-heatmap} and \Cref{fig:appendix-a-scenario-radar-comparison} of Appendix A. Computation given in Code D.9; all four scores are max-normalized relative only to the six scenarios in this comparison set.}
+    \caption[Normalized scenario performance scores]{Normalized Scenario performance scores. Source: \texttt{notebooks/visualization/09\_thesis\_visualizations.ipynb}. Visualized in \Cref{fig:appendix-a-scenario-performance-heatmap} and \Cref{fig:appendix-a-scenario-radar-comparison} of Appendix A. Computation given in Code D.9; all four scores are max-normalized relative only to the six scenarios in this comparison set.}
     \label{tab:appendix-c-normalized-scenario-scores}
     \footnotesize
     \setlength{\tabcolsep}{3pt}
@@ -508,7 +508,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[H]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{AnyLogic KPI definitions and dynamic-intervention trigger conditions. KPI definitions from \texttt{data/processed/anylogic/anylogic\_kpi\_definitions.csv} (reproduced from \Cref{tab:anylogic-kpi-definitions}); intervention conditions from the Scenario D implementation reproduced in Code D.7.}
+    \caption[AnyLogic KPI definitions and dynamic-intervention triggers]{AnyLogic KPI definitions and dynamic-intervention trigger conditions. KPI definitions from \texttt{data/processed/anylogic/anylogic\_kpi\_definitions.csv} (reproduced from \Cref{tab:anylogic-kpi-definitions}); intervention conditions from the Scenario D implementation reproduced in Code D.7.}
     \label{tab:appendix-c-kpi-definitions-triggers}
     \footnotesize
     \setlength{\tabcolsep}{4pt}
@@ -573,7 +573,7 @@ Appendix C reproduces the complete analytical, forecasting, and Scenario tables 
 \begin{table}[!htbp]
     \centering
     \captionsetup{justification=raggedright,singlelinecheck=false}
-    \caption{Power BI Key Influencers analysis of the likelihood that congestion risk is High. Source: \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}, Operational Intelligence Insights page (Chapter 4, Figure 4.9). Reported in Chapter 4, Section 4.6.5 and Chapter 5, Section 5.4.}
+    \caption[Power BI Key Influencers for congestion risk]{Power BI Key Influencers analysis of the likelihood that congestion risk is High. Source: \texttt{dashboards/powerbi/aibd\_arrival\_operations\_dss.pbix}, Operational Intelligence Insights page (Chapter 4, Figure 4.9). Reported in Chapter 4, Section 4.6.5 and Chapter 5, Section 5.4.}
     \label{tab:appendix-c-powerbi-key-influencers}
     \small
     \setlength{\tabcolsep}{4pt}
