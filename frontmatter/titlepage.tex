@@ -1,143 +1,82 @@
+% ============================================================
+% TITLE PAGE
+% Ordered to match the departmental example supplied by the supervisor.
+% Requires: \usepackage{graphicx} and \usepackage{setspace} in the preamble.
+% Logo file: figures/ue_logo.png  (extracted from the supplied example document)
+% ============================================================
 \begin{titlepage}
 \thispagestyle{empty}
 
-% ============================================================
-% TITLE PAGE SETTINGS
-% ============================================================
-
 % Update this value only when the final submission date is known.
-\newcommand{\submissiondate}{23 August 2026}
+\newcommand{\submissiondate}{31 August 2026}
 
 \begin{spacing}{1.0}
-
 \centering
 
-% ============================================================
-% UNIVERSITY
-% ============================================================
+% ------------------------------------------------------------
+% UNIVERSITY LOGO
+% Wrapped in \IfFileExists so the document still compiles if the
+% logo has not yet been placed in figures/.
+% ------------------------------------------------------------
+\vspace*{0.4cm}
+\IfFileExists{figures/ue_logo.png}{%
+  \includegraphics[width=0.46\textwidth]{figures/ue_logo.png}%
+}{%
+  \fbox{\parbox[c][2.4cm][c]{0.46\textwidth}{\centering\itshape
+  University of Europe for Applied Sciences\\ logo placeholder ---
+  add \texttt{figures/ue\_logo.png}}}%
+}
 
-\vspace*{0.7cm}
+% ------------------------------------------------------------
+% DOCUMENT TYPE, DEGREE AND ACADEMIC UNIT
+% ------------------------------------------------------------
+\vspace{1.5cm}
+{\fontsize{20}{24}\selectfont\bfseries
+Master Thesis\par}
 
-{\fontsize{14}{17}\selectfont
-\bfseries
-University of Europe for Applied Sciences\par}
+\vspace{0.7cm}
+{\fontsize{13}{16}\selectfont
+Master of Science (M.Sc.)\par}
 
-\vspace{0.15cm}
+\vspace{0.25cm}
+{\fontsize{13}{16}\selectfont
+Department of Business\par}
 
-{\fontsize{12.5}{15}\selectfont
-Faculty of Data Science \& Artificial Intelligence\par}
+\vspace{0.25cm}
+{\fontsize{13}{16}\selectfont
+Major: Data Science (DS)\par}
 
-\vspace{0.10cm}
-
-{\fontsize{12}{14}\selectfont
-Potsdam, Germany\par}
-
-% ============================================================
+% ------------------------------------------------------------
 % THESIS TITLE
-% ============================================================
-
-\vspace{1.6cm}
-
-{\fontsize{19}{23}\selectfont
-\bfseries
+% ------------------------------------------------------------
+\vspace{1.7cm}
+{\fontsize{18}{22}\selectfont\bfseries
 Predictive Operational Intelligence for\par
 Airport Arrival Management\par}
 
 \vspace{0.55cm}
-
-{\fontsize{13.5}{17}\selectfont
-\itshape
+{\fontsize{13}{16}\selectfont\itshape
 A Data-Driven Case Study of Blaise Diagne\par
 International Airport (AIBD), Senegal\par}
 
-% ============================================================
-% DEGREE INFORMATION
-% ============================================================
+% ------------------------------------------------------------
+% AUTHOR AND SUPERVISION
+% ------------------------------------------------------------
+\vspace{1.7cm}
+{\fontsize{12}{17}\selectfont
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}l@{\hspace{0.4cm}}l@{}}
+\textbf{Author:}            & Mohameth Gueye \\
+\textbf{Matrikel-Number:}   & 87878938 \\
+\textbf{First supervisor:}  & Dr. Farhan Khan \\
+\textbf{Second supervisor:} & Prof. Dr. Talha Ali Khan \\
+\textbf{Submitted on:}      & \submissiondate \\
+\end{tabular}\par}
 
-\vspace{1.4cm}
-
+\vspace{0.9cm}
 {\fontsize{12}{15}\selectfont
-Master's Thesis submitted in partial fulfillment of the requirements\par
-for the degree of Master of Science (M.Sc.)\par
-in Data Science\par}
-
-% ============================================================
-% AUTHOR
-% ============================================================
-
-\vspace{1.25cm}
-
-{\fontsize{11.5}{14}\selectfont
-submitted by\par}
-
-\vspace{0.25cm}
-
-{\fontsize{15}{18}\selectfont
-\bfseries
-Mohameth Gueye\par}
-
-\vspace{0.25cm}
-
-{\fontsize{11.5}{14}\selectfont
-Matriculation number: 87878938\par}
-
-% ============================================================
-% SUPERVISION
-% ============================================================
-
-\vspace{1.35cm}
-
-{\fontsize{11.5}{14}\selectfont
-
-\renewcommand{\arraystretch}{1.30}
-
-\begin{tabular}{@{}r@{\hspace{0.45cm}}l@{}}
-
-\textbf{First supervisor:}
-&
-Dr. Farhan Khan
-\\
-
-\textbf{Co-supervisor:}
-&
-Prof. Dr. Talha Ali Khan
-\\
-
-\textbf{Second supervisor:}
-&
-Prof. Dr. Iftikhar Ahmed
-
-\end{tabular}
-
-}
-
-% ============================================================
-% SUBMISSION INFORMATION
-% ============================================================
-
-\vspace{0.85cm}
-
-{\fontsize{11.5}{14}\selectfont
-
-\renewcommand{\arraystretch}{1.30}
-
-\begin{tabular}{@{}r@{\hspace{0.45cm}}l@{}}
-
-\textbf{Date of submission:}
-&
-\submissiondate
-\\
-
-\textbf{Place:}
-&
-Potsdam, Germany
-
-\end{tabular}
-
-}
+Potsdam, Germany\par}
 
 \vfill
-
 \end{spacing}
-
 \end{titlepage}
